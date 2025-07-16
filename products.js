@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function handleDrawerVisibility() {
     const drawer = document.querySelector('forge-drawer');
     const mobileOrderDialog = document.getElementById('mobile-order-sheet');
-    const isSmallScreen = window.innerWidth < 1200;
+    const isSmallScreen = window.innerWidth < 1080;
     
     if (isSmallScreen) {
       // Hide drawer on small screens
