@@ -1,0 +1,654 @@
+:root {
+--forge-theme-primary: #2e7d32 !important;
+--forge-theme-on-primary: #f5f5f5 !important;
+--forge-theme-secondary: #2e7d32 !important;
+--forge-theme-on-secondary: #f5f5f5 !important;
+--forge-theme-tertiary: #2e7d32 !important;
+--forge-theme-on-tertiary: #f5f5f5 !important;
+--forge-theme-primary-container-high: #91df8c !important;
+--forge-theme-primary-container: #b4e9b2 !important;
+--forge-theme-primary-container-low: #d7f2d6 !important;
+--forge-theme-primary-container-minimum: #f9faf9 !important;
+--forge-theme-on-primary-container-high: #004600 !important;
+--forge-theme-on-primary-container: #1d4e22 !important;
+--forge-theme-on-primary-container-low: #3d533d !important;
+--forge-theme-on-primary-container-minimum: #555655 !important;
+--forge-theme-secondary-container-high: #91df8c !important;
+--forge-theme-secondary-container: #b4e9b2 !important;
+--forge-theme-secondary-container-low: #d7f2d6 !important;
+--forge-theme-secondary-container-minimum: #f9faf9 !important;
+--forge-theme-on-secondary-container-high: #004600 !important;
+--forge-theme-on-secondary-container: #1d4e22 !important;
+--forge-theme-on-secondary-container-low: #3d533d !important;
+--forge-theme-on-secondary-container-minimum: #555655 !important;
+--forge-theme-tertiary-container-high: #91df8c !important;
+--forge-theme-tertiary-container: #b4e9b2 !important;
+--forge-theme-tertiary-container-low: #d7f2d6 !important;
+--forge-theme-tertiary-container-minimum: #f9faf9 !important;
+--forge-theme-on-tertiary-container-high: #004600 !important;
+--forge-theme-on-tertiary-container: #1d4e22 !important;
+--forge-theme-on-tertiary-container-low: #3d533d !important;
+--forge-theme-on-tertiary-container-minimum: #555655 !important;
+--forge-theme-on-success-container-high: #004600 !important;
+--forge-theme-on-success-container: #1d4e22 !important;
+--forge-theme-on-success-container-low: #3d533d !important;
+--forge-theme-on-success-container-minimum: #555655 !important;
+--forge-theme-on-error-container-high: #3e0000 !important;
+--forge-theme-on-error-container: #5c171c !important;
+--forge-theme-on-error-container-low: #5f3a3b !important;
+--forge-theme-on-error-container-minimum: #585555 !important;
+--forge-theme-on-warning-container-high: #581f00 !important;
+--forge-theme-on-warning-container: #5d3217 !important;
+--forge-theme-on-warning-container-low: #5e433a !important;
+--forge-theme-on-warning-container-minimum: #595555 !important;
+--forge-theme-on-info-container-high: #373e4a !important;
+--forge-theme-on-info-container: #42464f !important;
+--forge-theme-on-info-container-low: #4c4e53 !important;
+--forge-theme-on-info-container-minimum: #565656 !important;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+}
+
+.app-bar {
+  --forge-app-bar-background: #1C2E33;
+  --forge-app-bar-foreground: #fff;
+}
+
+.drawer-content {
+  padding: 0rem 1rem;;
+}
+
+.header-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.header-card-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 60%;
+}
+
+.header-card-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.balance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-right: 20px;
+}
+
+.balance-section p {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.balance-section forge-meter {
+  width: 100%;
+  height: 8px;
+}
+
+/* Balance amount styling */
+.balance-amount {
+  color: var(--forge-theme-success);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Disabled Add button styling */
+forge-button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.disable-scrollbars::-webkit-scrollbar {
+  background: transparent;
+  /* Chrome/Safari/Webkit */
+  width: 0px;
+}
+
+.disable-scrollbars {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+}
+
+body {
+  background-color: var(--forge-theme-surface-dim);
+  margin: 0;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.body-container {
+  padding: 2rem 2rem 10rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+}
+
+/* Set drawer width to 400px */
+forge-drawer {
+  --forge-drawer-width: 350px;
+}
+
+/* Customize chip appearance */
+forge-chip {
+  --forge-chip-shape: 4px;
+  --forge-chip-height: 44px;
+  --forge-chip-background: #fff;
+  --forge-chip-padding-inline: 1rem;
+}
+
+.category-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  background-color: rgb(239, 239, 239);
+  padding: 5px 15px;
+  border-radius: 4px;
+}
+
+.category-divider p {
+  margin: 0;
+}
+
+#category-chips {
+  margin-bottom: 30px;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.product-item img {
+  width: 80px;
+  height: auto;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding-right: 20px;
+}
+
+.quantity-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 175px;
+}
+
+/* Order item styles */
+.order-item {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--forge-theme-outline);
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
+.product-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--forge-theme-on-surface);
+  flex: 1;
+  padding-right: 16px;
+}
+
+.product-price {
+  margin: 0;
+  font-weight: 600;
+  color: var(--forge-theme-success);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.order-item-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
+
+/* Order quantity controls */
+.order-item-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 175px;
+}
+
+.order-item-quantity-controls forge-icon-button {
+  --forge-icon-button-size: 24px;
+  --forge-icon-button-density: compact;
+}
+
+.order-item-quantity-controls forge-text-field {
+  width: 80px;
+}
+
+/* Remove button styling */
+.remove-btn {
+  color: var(--forge-theme-error) !important;
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.remove-btn:hover {
+  background-color: var(--forge-theme-error-container);
+}
+
+.remove-btn forge-icon {
+  font-size: 16px;
+}
+
+/* Clear order button in toolbar */
+.clear-order-btn {
+  font-size: 14px;
+}
+
+.clear-order-btn forge-icon {
+  font-size: 16px;
+}
+
+/* Products container spacing */
+#products-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-divider {
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.category-divider:first-child {
+  margin-top: 0;
+}
+
+/* No results styling */
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--forge-theme-on-surface-variant);
+}
+
+.no-results p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Hide browser's default search clear button */
+.order-search-field input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.order-search-field input[type="search"]::-ms-clear {
+  display: none;
+}
+
+.order-search-field {
+  margin-bottom: 20px;
+  background-color: #fff;
+}
+
+/* Hide order drawer on smaller screens */
+@media (max-width: 1199px) {
+  forge-drawer {
+    display: none !important;
+  }
+
+  /* Adjust body container to use full width when drawer is hidden */
+  .body-container {
+    max-width: 100%;
+    padding-right: 30px;
+  }
+}
+
+/* Mobile order dialog with bottom-sheet preset */
+.mobile-order-sheet {
+  display: none;
+}
+
+#mobile-order-sheet {
+  --forge-dialog-width: 100vw;
+  --forge-dialog-max-width: 100vw;
+}
+
+@media (max-width: 1199px) {
+  .mobile-order-sheet {
+    display: block;
+  }
+
+  #mobile-order-sheet {
+    --forge-dialog-padding: 1rem;
+    --forge-dialog-shape: 0px;
+  }
+
+  .mobile-order-button {
+    --forge-button-height: 56px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .mobile-order-button forge-icon {
+    font-size: 20px;
+  }
+}
+
+span.item-total {
+  font-weight: bold;
+  color: var(--forge-theme-success);
+}
+
+.order-empty-message {
+  color: var(--forge-theme-text-medium);
+  text-align: center;
+  margin-top: 50%;
+}
+
+/* Mobile Order Dialog Styles */
+#mobile-order-dialog {
+  --forge-dialog-width: 100vw;
+  --forge-dialog-height: 100vh;
+  --forge-dialog-max-width: 100vw;
+  --forge-dialog-max-height: 100vh;
+}
+
+#mobile-order-dialog forge-scaffold {
+  height: auto;
+  width: 100%;
+  min-width: 100vw;
+}
+
+#mobile-order-dialog forge-scaffold > [slot="body"] {
+  padding: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.mobile-order-dialog-content {
+  padding: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.mobile-order-dialog-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-order-dialog-total .forge-typography--heading2 {
+  color: var(--forge-theme-success);
+  font-weight: 600;
+}
+
+/* Mobile dialog order items */
+.mobile-order-dialog-content .order-item {
+  padding: 2rem;
+  border-bottom: 1px solid var(--forge-theme-outline);
+  margin: 0;
+}
+
+.mobile-order-dialog-content .order-item:last-child {
+  border-bottom: none;
+}
+
+.mobile-order-dialog-content .order-item-header {
+  margin-bottom: 12px;
+}
+
+.mobile-order-dialog-content .order-item-controls {
+  gap: 12px;
+}
+
+.mobile-order-dialog-content .order-item-quantity-controls {
+  gap: 8px;
+}
+
+.mobile-order-dialog-content .order-item-quantity-controls forge-text-field {
+  width: 60px;
+}
+
+/* Empty state for mobile dialog */
+.mobile-order-dialog-content .order-empty-message {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--forge-theme-text-medium);
+}
+
+.tax-subtotal-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0rem;
+}
+
+.tax-subtotal-row-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.tax-subtotal-row-drawer span {
+  font-size: 12px;
+  color: var(--forge-theme-on-surface-variant);
+}
+
+/* Drawer footer styling */
+#order-total {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--forge-theme-success);
+}
+
+/* Individual tax/subtotal items styling */
+.tax-subtotal-row-drawer .subtotal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--forge-theme-on-surface-variant);
+}
+
+.tax-subtotal-row-drawer .subtotal-value {
+  color: var(--forge-theme-on-surface);
+}
+
+.tax-subtotal-row-drawer .tax-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--forge-theme-on-surface-variant);
+}
+
+.tax-subtotal-row-drawer .tax-value {
+  color: var(--forge-theme-on-surface);
+}
+
+/* Order total styling */
+.order-total-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--forge-theme-success);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--forge-theme-outline);
+}
+
+.order-total-label {
+  margin-right: 10px;
+  color: var(--forge-theme-text-high);
+}
+
+.order-total-value {
+  color: var(--forge-theme-success);
+}
+
+/* Order History Styles */
+.order-history-container {
+  --forge-card-padding: 0;
+  --forge-card-shape: 4px;
+}
+
+.order-history-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: var(--forge-theme-surface);
+  border-bottom: 1px solid var(--forge-theme-outline);
+}
+
+.order-history-header-item {
+  display: flex;
+  align-items: center;
+}
+
+.order-history-header-item span {
+  color: var(--forge-theme-on-surface-variant);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.order-history-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr;
+  gap: 1rem;
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid var(--forge-theme-outline);
+  align-items: center;
+}
+
+.order-history-row:last-child {
+  border-bottom: none;
+}
+
+.order-history-cell {
+  display: flex;
+  align-items: center;
+}
+
+.order-history-cell span {
+  color: var(--forge-theme-on-surface);
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+}
+
+.order-actions forge-button {
+  --forge-button-height: 44px;
+  --forge-button-padding-inline: 12px;
+  font-size: 12px;
+}
+
+.order-actions forge-button:first-child {
+  padding-right: 1rem;
+}
+
+/* Status badge styling */
+.order-history-cell forge-badge {
+  --forge-badge-shape: 16px;
+  --forge-badge-padding-inline: 8px;
+  --forge-badge-padding-block: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Reorder drawer styling */
+#reorder-drawer {
+  --forge-drawer-width: 350px;
+}
+
+#reorder-drawer .drawer-content {
+  padding: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+#reorder-drawer .order-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--forge-theme-outline);
+}
+
+#reorder-drawer .order-item:last-child {
+  border-bottom: none;
+}
+
+.reorder-summary {
+  padding: 1rem;
+  background-color: var(--forge-theme-surface);
+  border-top: 1px solid var(--forge-theme-outline);
+  margin-top: auto;
+}
+
+.reorder-summary .tax-subtotal-row-drawer {
+  margin-bottom: 1rem;
+}
+
+.reorder-summary .order-total-container {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.mobile-order-button {
+  --forge-button-height: 56px;
+  font-size: 16px;
+}
+
+forge-dialog::part(surface) {
+  box-shadow: var(--forge-elevation-24);
+}
