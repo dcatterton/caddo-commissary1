@@ -333,7 +333,7 @@ forge-chip {
 }
 
 /* Hide order drawer on smaller screens */
-@media (max-width: 1199px) {
+@media (max-width: 1079px) {
   forge-drawer {
     display: none !important;
   }
