@@ -21,8 +21,11 @@
 <body>
   <forge-scaffold viewport>
     <div slot="header">
-      <forge-app-bar title-text="Caddo Parish, LA – Commissary Ordering" class="app-bar">
+      <forge-app-bar title-text="Caddo Parish, LA" class="app-bar">
         <forge-icon slot="logo" name="tyler_talking_t_logo" external></forge-icon>
+        <forge-icon-button slot="end" aria-label="Toggle full screen" onclick="toggleFullScreen()" id="fullscreen-toggle">
+          <forge-icon name="fullscreen" external></forge-icon>
+        </forge-icon-button>
       </forge-app-bar>
 
       <!-- <forge-card style="--forge-card-padding:0.5rem 1.5rem 0.5rem 0rem; --forge-card-shape: 0;">
@@ -150,7 +153,7 @@
   </forge-dialog>
 
   <!-- Mobile Order Dialog -->
-  <forge-dialog id="mobile-order-dialog" label="Order Details" description="Review and submit your commissary order">
+  <forge-dialog id="mobile-order-dialog" label="Order Details" description="Review and submit your commissary order" fullscreen>
     <forge-scaffold>
       <forge-toolbar slot="header">
         <h2 slot="start" class="forge-typography--heading3">Order Details</h2>

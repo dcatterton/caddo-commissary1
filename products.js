@@ -740,10 +740,92 @@ function clearOrder() {
 let currentSelectedLetter = 'all';
 let currentSearchTerm = '';
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-  // Render all products initially
-  renderProducts();
+// Full screen functionality
+function requestFullScreen() {
+  const elem = document.documentElement;
+  
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { // Safari
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { // IE11
+    elem.msRequestFullscreen();
+  } else if (elem.mozRequestFullScreen) { // Firefox
+    elem.mozRequestFullScreen();
+  }
+}
+
+function exitFullScreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) { // Safari
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { // IE11
+    document.msExitFullscreen();
+  } else if (document.mozCancelFullScreen) { // Firefox
+    document.mozCancelFullScreen();
+  }
+}
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement && 
+      !document.webkitFullscreenElement && 
+      !document.msFullscreenElement && 
+      !document.mozFullScreenElement) {
+    requestFullScreen();
+  } else {
+    exitFullScreen();
+  }
+}
+
+// Check if full screen is supported
+function isFullScreenSupported() {
+  return document.fullscreenEnabled || 
+         document.webkitFullscreenEnabled || 
+         document.msFullscreenEnabled || 
+         document.mozFullScreenEnabled;
+}
+
+// Update full screen button state
+function updateFullScreenButtonState() {
+  const fullscreenToggle = document.getElementById('fullscreen-toggle');
+  if (!fullscreenToggle) return;
+  
+  const isFullScreen = !!(document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.msFullscreenElement || 
+                         document.mozFullScreenElement);
+  
+  const icon = fullscreenToggle.querySelector('forge-icon');
+  if (icon) {
+    icon.name = isFullScreen ? 'fullscreen_exit' : 'fullscreen';
+  }
+  
+  // Disable button if full screen is not supported
+  if (!isFullScreenSupported()) {
+    fullscreenToggle.disabled = true;
+    fullscreenToggle.title = 'Full screen not supported';
+  } else {
+    fullscreenToggle.disabled = false;
+    fullscreenToggle.title = isFullScreen ? 'Exit full screen' : 'Enter full screen';
+  }
+}
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set initial full screen button state
+    updateFullScreenButtonState();
+    
+    // Request full screen mode on page load if supported
+    if (isFullScreenSupported()) {
+      // Add a small delay to ensure the page is fully loaded
+      setTimeout(() => {
+        requestFullScreen();
+      }, 500);
+    }
+    
+    // Render all products initially
+    renderProducts();
   
   // Initialize order display with empty state
   updateOrderDisplay();
@@ -812,6 +894,41 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Listen for window resize
   window.addEventListener('resize', handleDrawerVisibility);
+  
+  // Add keyboard shortcuts for full screen
+  document.addEventListener('keydown', function(event) {
+    // F11 key to toggle full screen
+    if (event.key === 'F11') {
+      event.preventDefault();
+      toggleFullScreen();
+    }
+    // Escape key to exit full screen
+    if (event.key === 'Escape' && (document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.msFullscreenElement || 
+                                   document.mozFullScreenElement)) {
+      exitFullScreen();
+    }
+  });
+  
+  // Listen for full screen changes
+  document.addEventListener('fullscreenchange', handleFullScreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+  document.addEventListener('msfullscreenchange', handleFullScreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+  
+  function handleFullScreenChange() {
+    // Update the full screen toggle button state
+    updateFullScreenButtonState();
+    
+    const isFullScreen = !!(document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.msFullscreenElement || 
+                           document.mozFullScreenElement);
+    
+    // You can add any additional logic here when full screen state changes
+    console.log('Full screen state changed:', isFullScreen);
+  }
   
   // Update category chip functionality
   const chipSet = document.getElementById('category-chips');
