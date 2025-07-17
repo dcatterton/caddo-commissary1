@@ -113,6 +113,7 @@
       <forge-drawer open direction="right">
         <forge-toolbar slot="header" no-divider>
           <div slot="start"><p class="forge-typography--overline">Order details</p></div>
+          <div slot="end"><p class="forge-typography--body1 item-count" style="color: var(--forge-theme-text-medium);">4 items</p></div>
           <!-- <forge-button slot="end" variant="tonal" onclick="clearOrder()" class="clear-order-btn" theme="error">
             <forge-icon slot="start" name="delete" external></forge-icon>
             Clear Order
@@ -139,7 +140,7 @@
               <span class="order-total-value" id="order-total">$0.00</span>
             </div>
           </div>
-          <forge-button slot="end" variant="raised">Submit order</forge-button>
+          <forge-button slot="end" variant="raised" onclick="submitOrder()">Submit order</forge-button>
         </forge-toolbar>
       </forge-drawer>
     </div>
@@ -164,21 +165,125 @@
       <div slot="body" class="mobile-order-dialog-content">
         <!-- Order items will be dynamically loaded here -->
       </div>
-      <forge-toolbar slot="body-footer" inverted auto-height>
-        <div class="tax-subtotal-row">
-          <span class="forge-typography--body2">Subtotal</span>
-          <span class="forge-typography--body2">Sales tax</span>
-        </div>
-      </forge-toolbar>
-      <forge-toolbar slot="footer" inverted>
-        <div slot="start" class="mobile-order-dialog-total">
-          <span class="forge-typography--body2">Order total: </span>
-          <span class="forge-typography--heading3 amount" id="mobile-dialog-total">$0.00</span>
+      <forge-toolbar slot="footer" inverted auto-height style="--forge-toolbar-padding-block: 1rem;">
+        <div slot="center" class="mobile-order-summary">
+          <div class="mobile-cost-breakdown">
+            <div class="cost-row">
+              <span class="cost-label">Subtotal:</span>
+              <span class="cost-value" id="mobile-subtotal">$0.00</span>
+            </div>
+            <div class="cost-row">
+              <span class="cost-label">Sales tax:</span>
+              <span class="cost-value" id="mobile-tax">$0.00</span>
+            </div>
+            <div class="cost-divider"></div>
+            <div class="cost-row total-row">
+              <span class="cost-label total-label">Order total: </span>
+              <span class="cost-value total-value" id="mobile-dialog-total">$0.00</span>
+            </div>
+          </div>
         </div>
         <forge-button slot="end" variant="raised" onclick="submitOrder()">
-          Submit Order
-          <forge-icon slot="end" name="send" external></forge-icon>
+          Submit order
         </forge-button>
+      </forge-toolbar>
+    </forge-scaffold>
+  </forge-dialog>
+
+  <!-- Order Confirmation Dialog -->
+  <forge-dialog id="order-confirmation-dialog" label="Order Confirmation" description="Review and confirm your commissary order">
+    <forge-scaffold>
+      <forge-toolbar slot="header">
+        <h2 slot="start" class="forge-typography--heading3">Order Confirmation</h2>
+        <forge-icon-button slot="end" aria-label="Close dialog" onclick="closeOrderConfirmationDialog()">
+          <forge-icon name="close" external></forge-icon>
+        </forge-icon-button>
+      </forge-toolbar>
+      
+      <div slot="body" class="order-confirmation-content">
+        <!-- Order Summary Section -->
+        <!-- <div class="confirmation-section">
+          <h3 class="forge-typography--heading4">Order Summary</h3>
+          <div id="confirmation-items-list">
+           Order items will be populated here
+          </div>
+        </div> -->
+        
+        <!-- Customer Information Section -->
+        <div class="confirmation-section">
+          <h3 class="forge-typography--overline">Customer Information</h3>
+          <div class="customer-info-grid">
+            <div class="info-row">
+              <span class="info-label">Inmate ID:</span>
+              <span class="info-value">#12345</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Name:</span>
+              <span class="info-value">John Doe</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Facility:</span>
+              <span class="info-value">Caddo Parish Correctional Center</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Order Date:</span>
+              <span class="info-value" id="order-date">Today</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Remaining Balance:</span>
+              <span class="info-value" id="remaining-balance-confirmation">$21.72</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Order Details Section -->
+        <div class="confirmation-section">
+          <h3 class="forge-typography--overline">Order Details</h3>
+          <div class="order-details-grid">
+            <div class="detail-row">
+              <span class="detail-label">Subtotal:</span>
+              <span class="detail-value" id="confirmation-subtotal">$0.00</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Sales Tax:</span>
+              <span class="detail-value" id="confirmation-tax">$0.00</span>
+            </div>
+            <div class="detail-row total-row">
+              <span class="detail-label">Order Total:</span>
+              <span class="detail-value total-value" id="confirmation-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Terms and Conditions -->
+        <div class="confirmation-section">
+          <h3 class="forge-typography--overline">Terms & Conditions</h3>
+          <div class="terms-content">
+            <p class="forge-typography--body2">
+              By submitting this order, you agree to the following terms:
+            </p>
+            <ul class="terms-list">
+              <li>Orders are processed within 24-48 hours</li>
+              <li>All sales are final - no returns or exchanges</li>
+              <li>Items are subject to availability</li>
+              <li>Orders may be modified or cancelled before processing</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <forge-toolbar slot="footer" inverted>
+        <div slot="start">
+          <forge-button variant="outlined" onclick="closeOrderConfirmationDialog()">
+            Cancel
+          </forge-button>
+        </div>
+        <div slot="end">
+          <forge-button variant="raised" onclick="confirmAndSubmitOrder()" theme="success">
+            <forge-icon slot="start" name="check_circle" external></forge-icon>
+            Confirm and submit Order
+          </forge-button>
+        </div>
       </forge-toolbar>
     </forge-scaffold>
   </forge-dialog>

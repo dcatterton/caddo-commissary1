@@ -316,8 +316,16 @@ function updatePriceDisplay(input, productName, basePrice) {
 }
 
 function updateAddButtonState(input, productName, basePrice, quantity) {
-  const addButton = input.closest('.item-right').querySelector('forge-button');
+  const itemRight = input.closest('.item-right');
+  const addButton = itemRight.querySelector('forge-button');
+  const existingBadge = itemRight.querySelector('forge-badge');
+  
   if (!addButton) return;
+  
+  // Remove existing badge if present
+  if (existingBadge) {
+    existingBadge.remove();
+  }
   
   if (quantity <= 0) {
     addButton.disabled = true;
@@ -325,33 +333,50 @@ function updateAddButtonState(input, productName, basePrice, quantity) {
     return;
   }
   
-  // Calculate if adding this item would exceed balance (including 9% sales tax)
+  // Calculate if adding this item would exceed balance (no sales tax)
   const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const newItemTotal = basePrice * quantity;
   const totalSubtotalAfterAdd = currentSubtotal + newItemTotal;
-  const totalAfterTax = totalSubtotalAfterAdd * 1.09; // Add 9% sales tax
+  const totalAfterTax = totalSubtotalAfterAdd; // No sales tax
   const remainingBalance = 21.72;
   
   if (totalAfterTax > remainingBalance) {
-    addButton.disabled = true;
-    addButton.textContent = 'Exceeds Balance';
+    // Hide the button and show badge instead
+    addButton.style.display = 'none';
+    
+    // Create and insert badge
+    const badge = document.createElement('forge-badge');
+    badge.textContent = 'Exceeds balance';
+    badge.theme = 'info-secondary';
+    badge.style.marginLeft = 'auto'; // Push to the right side
+    itemRight.appendChild(badge);
   } else {
+    // Show the button and ensure it's enabled
+    addButton.style.display = '';
     addButton.disabled = false;
     addButton.textContent = 'Add';
   }
 }
 
 function updateAllAddButtonStates() {
-  const addButtons = document.querySelectorAll('.item-right forge-button');
+  const itemRights = document.querySelectorAll('.item-right');
   const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const remainingBalance = 21.72;
   
-  addButtons.forEach(button => {
-    const quantityField = button.closest('.item-right').querySelector('input[type="number"]');
-    if (!quantityField) return;
+  itemRights.forEach(itemRight => {
+    const addButton = itemRight.querySelector('forge-button');
+    const existingBadge = itemRight.querySelector('forge-badge');
+    const quantityField = itemRight.querySelector('input[type="number"]');
+    
+    if (!addButton || !quantityField) return;
+    
+    // Remove existing badge if present
+    if (existingBadge) {
+      existingBadge.remove();
+    }
     
     const quantity = parseInt(quantityField.value) || 0;
-    const productCard = button.closest('.product-item');
+    const productCard = itemRight.closest('.product-item');
     const priceElement = productCard.querySelector('.item-price');
     
     if (!priceElement) return;
@@ -364,17 +389,27 @@ function updateAllAddButtonStates() {
     const basePrice = parseFloat(priceMatch[1]);
     const newItemTotal = basePrice * quantity;
     const totalSubtotalAfterAdd = currentSubtotal + newItemTotal;
-    const totalAfterTax = totalSubtotalAfterAdd * 1.09; // Add 9% sales tax
+    const totalAfterTax = totalSubtotalAfterAdd; // No sales tax
     
     if (quantity <= 0) {
-      button.disabled = true;
-      button.textContent = 'Add';
+      addButton.style.display = '';
+      addButton.disabled = true;
+      addButton.textContent = 'Add';
     } else if (totalAfterTax > remainingBalance) {
-      button.disabled = true;
-      button.textContent = 'Exceeds Balance';
+      // Hide the button and show badge instead
+      addButton.style.display = 'none';
+      
+      // Create and insert badge
+      const badge = document.createElement('forge-badge');
+      badge.textContent = 'Exceeds Balance';
+      badge.theme = 'info-secondary';
+      badge.style.marginLeft = 'auto'; // Push to the right side
+      itemRight.appendChild(badge);
     } else {
-      button.disabled = false;
-      button.textContent = 'Add';
+      // Show the button and ensure it's enabled
+      addButton.style.display = '';
+      addButton.disabled = false;
+      addButton.textContent = 'Add';
     }
   });
 }
@@ -387,17 +422,17 @@ function addToOrder(productName, price) {
   const quantity = parseInt(quantityField.value) || 0;
   
   if (quantity > 0) {
-    // Calculate current order total (including 9% sales tax)
+    // Calculate current order total (no sales tax)
     const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const newItemTotal = price * quantity;
     const totalSubtotalAfterAdd = currentSubtotal + newItemTotal;
-    const totalAfterTax = totalSubtotalAfterAdd * 1.09; // Add 9% sales tax
+    const totalAfterTax = totalSubtotalAfterAdd; // No sales tax
     const remainingBalance = 21.72;
     
     // Check if adding this item would exceed the balance
     if (totalAfterTax > remainingBalance) {
       // Show error message or alert
-      alert(`Cannot add item. This would exceed your remaining balance of $${remainingBalance.toFixed(2)} (including 9% sales tax).`);
+      alert(`Cannot add item. This would exceed your remaining balance of $${remainingBalance.toFixed(2)}.`);
       return;
     }
     
@@ -415,6 +450,10 @@ function addToOrder(productName, price) {
     }
     
     updateOrderDisplay();
+    
+    // Show toast notification for added items
+    console.log('About to show toast, mobile view:', window.innerWidth < 1080);
+    showAddToOrderToast(quantity, productName);
     
     // Reset quantity field and price display to default state
     quantityField.value = 1;
@@ -445,19 +484,16 @@ function closeMobileOrderDialog() {
 function updateMobileOrderDialog() {
   const dialogContent = document.querySelector('.mobile-order-dialog-content');
   const dialogTotal = document.getElementById('mobile-dialog-total');
-  const taxSubtotalRow = document.querySelector('.tax-subtotal-row');
+  const mobileSubtotal = document.getElementById('mobile-subtotal');
+  const mobileTax = document.getElementById('mobile-tax');
   
   if (!dialogContent || !dialogTotal) return;
   
   if (currentOrder.length === 0) {
     dialogContent.innerHTML = '<p class="forge-typography--body2 order-empty-message">No items in order</p>';
     dialogTotal.textContent = '$0.00';
-    if (taxSubtotalRow) {
-      taxSubtotalRow.innerHTML = `
-        <span class="forge-typography--body2">Subtotal: $0.00</span>
-        <span class="forge-typography--body2">Sales tax: $0.00</span>
-      `;
-    }
+    if (mobileSubtotal) mobileSubtotal.textContent = '$0.00';
+    if (mobileTax) mobileTax.textContent = '$0.00';
     return;
   }
   
@@ -490,7 +526,6 @@ function updateMobileOrderDialog() {
             </forge-icon-button>
           </div>
           <forge-button variant="text" onclick="removeFromOrder('${escapedName}')" class="remove-btn" theme="error">
-            <forge-icon slot="start" name="remove" external></forge-icon>
             Remove
           </forge-button>
         </div>
@@ -498,20 +533,16 @@ function updateMobileOrderDialog() {
     `;
   });
   
-  // Calculate sales tax (9%)
-  const salesTax = subtotal * 0.09;
+  // Calculate sales tax (0%)
+  const salesTax = subtotal * 0.00;
   const orderTotal = subtotal + salesTax;
   
   dialogContent.innerHTML = html;
   dialogTotal.textContent = `$${orderTotal.toFixed(2)}`;
   
-  // Update the tax and subtotal row
-  if (taxSubtotalRow) {
-    taxSubtotalRow.innerHTML = `
-      <span class="forge-typography--body1">Subtotal: $${subtotal.toFixed(2)}</span>
-      <span class="forge-typography--body1">Sales tax: $${salesTax.toFixed(2)}</span>
-    `;
-  }
+  // Update the mobile cost breakdown
+  if (mobileSubtotal) mobileSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+  if (mobileTax) mobileTax.textContent = `$${salesTax.toFixed(2)}`;
 }
 
 function submitOrder() {
@@ -520,25 +551,8 @@ function submitOrder() {
     return;
   }
   
-  const subtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const salesTax = subtotal * 0.09;
-  const orderTotal = subtotal + salesTax;
-  
-  if (confirm(`Submit order for $${orderTotal.toFixed(2)}?\n\nSubtotal: $${subtotal.toFixed(2)}\nSales tax: $${salesTax.toFixed(2)}\nOrder total: $${orderTotal.toFixed(2)}`)) {
-    // Here you would typically send the order to your backend
-    alert('Order submitted successfully!');
-    
-    // Clear the order
-    currentOrder = [];
-    updateOrderDisplay();
-    updateMobileOrderDialog();
-    
-    // Close the dialog
-    const dialog = document.getElementById('mobile-order-dialog');
-    if (dialog) {
-      dialog.open = false;
-    }
-  }
+  // Show the confirmation dialog instead of simple confirm
+  showOrderConfirmationDialog();
 }
 
 function updateOrderDisplay() {
@@ -551,6 +565,7 @@ function updateOrderDisplay() {
   const clearOrderBtn = document.querySelector('.clear-order-btn');
   const drawerSubtotal = document.getElementById('drawer-subtotal');
   const drawerTax = document.getElementById('drawer-tax');
+  const itemCountElement = document.querySelector('.item-count');
   
   // Update all Add button states after order changes
   updateAllAddButtonStates();
@@ -566,6 +581,7 @@ function updateOrderDisplay() {
     if (clearOrderBtn) clearOrderBtn.style.display = 'none';
     if (drawerSubtotal) drawerSubtotal.textContent = '$0.00';
     if (drawerTax) drawerTax.textContent = '$0.00';
+    if (itemCountElement) itemCountElement.textContent = '0 items';
     
     // Hide mobile order dialog when no items
     const mobileOrderDialog = document.getElementById('mobile-order-sheet');
@@ -578,18 +594,20 @@ function updateOrderDisplay() {
   // Show clear order button when there are items
   if (clearOrderBtn) clearOrderBtn.style.display = 'flex';
   
-      // Show mobile order dialog when there are items
-    const mobileOrderDialog = document.getElementById('mobile-order-sheet');
-    if (mobileOrderDialog) {
-      mobileOrderDialog.open = true;
-    }
+  // Show mobile order dialog when there are items
+  const mobileOrderDialog = document.getElementById('mobile-order-sheet');
+  if (mobileOrderDialog) {
+    mobileOrderDialog.open = true;
+  }
   
   let html = '';
   let total = 0;
+  let totalItems = 0;
   
   currentOrder.forEach(item => {
     const itemTotal = item.price * item.quantity;
     total += itemTotal;
+    totalItems += item.quantity;
     
     // Escape the item name for use in HTML attributes
     const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
@@ -613,7 +631,6 @@ function updateOrderDisplay() {
             </forge-icon-button>
           </div>
           <forge-button variant="text" onclick="removeFromOrder('${escapedName}')" class="remove-btn" theme="error">
-            <forge-icon slot="start" name="remove" external></forge-icon>
             Remove
           </forge-button>
         </div>
@@ -622,7 +639,7 @@ function updateOrderDisplay() {
   });
   
   // Calculate sales tax and total
-  const salesTax = total * 0.09;
+  const salesTax = total * 0.00;
   const orderTotal = total + salesTax;
   
   const totalText = `$${orderTotal.toFixed(2)}`;
@@ -644,6 +661,12 @@ function updateOrderDisplay() {
   if (drawerSubtotal) drawerSubtotal.textContent = `$${total.toFixed(2)}`;
   if (drawerTax) drawerTax.textContent = `$${salesTax.toFixed(2)}`;
   
+  // Update item count in drawer header
+  if (itemCountElement) {
+    const itemText = totalItems === 1 ? '1 item' : `${totalItems} items`;
+    itemCountElement.textContent = itemText;
+  }
+  
   // Update header meter - ensure it's a number and clamp to 0-100
   if (headerMeter) {
     const clampedValue = Math.max(0, Math.min(100, meterProgress));
@@ -654,6 +677,11 @@ function updateOrderDisplay() {
   const mobileDialog = document.getElementById('mobile-order-dialog');
   if (mobileDialog && mobileDialog.open) {
     updateMobileOrderDialog();
+  }
+  
+  // Ensure mobile order sheet state is correct for current screen size
+  if (window.innerWidth < 1080) {
+    handleDrawerVisibility();
   }
 }
 
@@ -667,21 +695,21 @@ function increaseOrderQuantity(productName) {
   const item = currentOrder.find(item => item.name === productName);
   if (!item) return;
   
-  // Calculate if increasing would exceed balance (including 9% sales tax)
-  const currentSubtotal = currentOrder.reduce((sum, orderItem) => {
-    if (orderItem.name === productName) {
-      return sum + (orderItem.price * (orderItem.quantity + 1));
+      // Calculate if increasing would exceed balance (no sales tax)
+    const currentSubtotal = currentOrder.reduce((sum, orderItem) => {
+      if (orderItem.name === productName) {
+        return sum + (orderItem.price * (orderItem.quantity + 1));
+      }
+      return sum + (orderItem.price * orderItem.quantity);
+    }, 0);
+    
+    const totalAfterTax = currentSubtotal; // No sales tax
+    const remainingBalance = 21.72;
+    
+    if (totalAfterTax > remainingBalance) {
+      alert(`Cannot increase quantity. This would exceed your remaining balance of $${remainingBalance.toFixed(2)}.`);
+      return;
     }
-    return sum + (orderItem.price * orderItem.quantity);
-  }, 0);
-  
-  const totalAfterTax = currentSubtotal * 1.09; // Add 9% sales tax
-  const remainingBalance = 21.72;
-  
-  if (totalAfterTax > remainingBalance) {
-    alert(`Cannot increase quantity. This would exceed your remaining balance of $${remainingBalance.toFixed(2)} (including 9% sales tax).`);
-    return;
-  }
   
   item.quantity += 1;
   updateOrderDisplay();
@@ -707,23 +735,23 @@ function updateOrderQuantity(productName, newQuantity) {
     return;
   }
   
-  // Calculate if the new quantity would exceed balance (including 9% sales tax)
-  const currentSubtotal = currentOrder.reduce((sum, orderItem) => {
-    if (orderItem.name === productName) {
-      return sum + (orderItem.price * quantity);
+      // Calculate if the new quantity would exceed balance (no sales tax)
+    const currentSubtotal = currentOrder.reduce((sum, orderItem) => {
+      if (orderItem.name === productName) {
+        return sum + (orderItem.price * quantity);
+      }
+      return sum + (orderItem.price * orderItem.quantity);
+    }, 0);
+    
+    const totalAfterTax = currentSubtotal; // No sales tax
+    const remainingBalance = 21.72;
+    
+    if (totalAfterTax > remainingBalance) {
+      alert(`Cannot set quantity to ${quantity}. This would exceed your remaining balance of $${remainingBalance.toFixed(2)}.`);
+      // Reset to previous valid quantity
+      updateOrderDisplay();
+      return;
     }
-    return sum + (orderItem.price * orderItem.quantity);
-  }, 0);
-  
-  const totalAfterTax = currentSubtotal * 1.09; // Add 9% sales tax
-  const remainingBalance = 21.72;
-  
-  if (totalAfterTax > remainingBalance) {
-    alert(`Cannot set quantity to ${quantity}. This would exceed your remaining balance of $${remainingBalance.toFixed(2)} (including 9% sales tax).`);
-    // Reset to previous valid quantity
-    updateOrderDisplay();
-    return;
-  }
   
   item.quantity = quantity;
   updateOrderDisplay();
@@ -736,9 +764,186 @@ function clearOrder() {
   }
 }
 
+// Custom toast notification for adding items to order
+function showAddToOrderToast(quantity, productName) {
+  // Create custom toast element
+  const toast = document.createElement('div');
+  toast.className = 'custom-toast';
+  
+  // Set toast content
+  toast.innerHTML = `
+    <div class="custom-toast-content">
+      <forge-icon name="check_circle" external></forge-icon>
+      <span class="custom-toast-message">${quantity} ${quantity === 1 ? 'item' : 'items'} added to order</span>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(toast);
+  
+  // Debug: Log toast creation
+  console.log('Toast created for mobile:', window.innerWidth < 1080);
+  console.log('Toast element:', toast);
+  console.log('Toast in DOM:', document.body.contains(toast));
+  
+  // Show the toast with animation
+  setTimeout(() => {
+    toast.classList.add('show');
+    console.log('Toast shown, classes:', toast.className);
+    console.log('Toast visible:', toast.offsetHeight > 0);
+    
+    // Fallback: If toast is not visible after 100ms, show alert
+    setTimeout(() => {
+      if (toast.offsetHeight === 0 || toast.offsetWidth === 0) {
+        console.log('Toast not visible, showing alert fallback');
+        alert(`${quantity} ${quantity === 1 ? 'item' : 'items'} added to order`);
+      }
+    }, 100);
+  }, 10);
+  
+  // Remove toast after duration
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+        console.log('Toast removed');
+      }
+    }, 300); // Wait for fade out animation
+  }, 3000);
+}
+
 // Global variables for current state
 let currentSelectedLetter = 'all';
 let currentSearchTerm = '';
+
+// Order Confirmation Dialog Functions
+function showOrderConfirmationDialog() {
+  const dialog = document.getElementById('order-confirmation-dialog');
+  if (!dialog) return;
+  
+  // Populate the confirmation dialog with current order data
+  populateConfirmationDialog();
+  
+  // Open the dialog
+  dialog.open = true;
+}
+
+function closeOrderConfirmationDialog() {
+  const dialog = document.getElementById('order-confirmation-dialog');
+  if (dialog) {
+    dialog.open = false;
+  }
+}
+
+function populateConfirmationDialog() {
+  // Calculate order totals
+  const subtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const salesTax = subtotal * 0.00;
+  const orderTotal = subtotal + salesTax;
+  const remainingBalance = 21.72 - orderTotal;
+  
+  // Set current date
+  const today = new Date();
+  const dateString = today.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  // Update order date
+  const orderDateElement = document.getElementById('order-date');
+  if (orderDateElement) {
+    orderDateElement.textContent = dateString;
+  }
+  
+  // Update remaining balance
+  const remainingBalanceElement = document.getElementById('remaining-balance-confirmation');
+  if (remainingBalanceElement) {
+    remainingBalanceElement.textContent = `$${remainingBalance.toFixed(2)}`;
+  }
+  
+  // Update order details
+  const subtotalElement = document.getElementById('confirmation-subtotal');
+  const taxElement = document.getElementById('confirmation-tax');
+  const totalElement = document.getElementById('confirmation-total');
+  
+  if (subtotalElement) subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+  if (taxElement) taxElement.textContent = `$${salesTax.toFixed(2)}`;
+  if (totalElement) totalElement.textContent = `$${orderTotal.toFixed(2)}`;
+  
+  // Populate order items
+  const itemsListElement = document.getElementById('confirmation-items-list');
+  if (itemsListElement) {
+    let itemsHtml = '';
+    
+    currentOrder.forEach(item => {
+      const itemTotal = item.price * item.quantity;
+      itemsHtml += `
+        <div class="confirmation-item">
+          <div class="confirmation-item-name">${item.name}</div>
+          <div class="confirmation-item-details">
+            <div class="confirmation-item-quantity">Qty: ${item.quantity}</div>
+            <div class="confirmation-item-price">$${itemTotal.toFixed(2)}</div>
+          </div>
+        </div>
+      `;
+    });
+    
+    itemsListElement.innerHTML = itemsHtml;
+  }
+}
+
+function confirmAndSubmitOrder() {
+  // Here you would typically send the order to your backend
+  // For now, we'll show a success message
+  
+  // Close the confirmation dialog
+  closeOrderConfirmationDialog();
+  
+  // Show success message
+  showOrderSuccessMessage();
+  
+  // Clear the order
+  currentOrder = [];
+  updateOrderDisplay();
+  updateMobileOrderDialog();
+  
+  // Close mobile dialog if open
+  const mobileDialog = document.getElementById('mobile-order-dialog');
+  if (mobileDialog && mobileDialog.open) {
+    mobileDialog.open = false;
+  }
+}
+
+function showOrderSuccessMessage() {
+  // Create success toast
+  const toast = document.createElement('div');
+  toast.className = 'custom-toast';
+  
+  toast.innerHTML = `
+    <div class="custom-toast-content">
+      <forge-icon name="check_circle" external></forge-icon>
+      <span class="custom-toast-message">Order submitted successfully!</span>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 4000);
+}
 
 // Full screen functionality
 function requestFullScreen() {
@@ -872,9 +1077,15 @@ function updateFullScreenButtonState() {
       if (drawer) {
         drawer.style.display = 'none';
       }
-      // Ensure mobile order dialog is available on small screens
+      // Show mobile order dialog only when there are items
       if (mobileOrderDialog) {
         mobileOrderDialog.style.display = 'block';
+        // Always check current order state when switching to mobile
+        if (currentOrder && currentOrder.length > 0) {
+          mobileOrderDialog.open = true;
+        } else {
+          mobileOrderDialog.open = false;
+        }
       }
     } else {
       // Show drawer on large screens

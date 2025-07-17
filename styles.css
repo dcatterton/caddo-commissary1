@@ -115,6 +115,17 @@ forge-button[disabled] {
   cursor: not-allowed;
 }
 
+/* Exceeds Balance badge styling */
+.item-right forge-badge {
+  --forge-badge-shape: 16px;
+  --forge-badge-padding-inline: 12px;
+  --forge-badge-padding-block: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: auto;
+  align-self: center;
+}
+
 .disable-scrollbars::-webkit-scrollbar {
   background: transparent;
   /* Chrome/Safari/Webkit */
@@ -395,6 +406,64 @@ span.item-total {
   --forge-dialog-max-height: 100vh;
 }
 
+/* Mobile Order Summary Footer */
+.mobile-order-summary {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-right: 60%;
+}
+
+.mobile-cost-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.cost-label {
+  color: var(--forge-theme-on-surface);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.cost-value {
+  color: var(--forge-theme-on-surface);
+  font-size: 14px;
+  font-weight: 400;
+  text-align: right;
+}
+
+.cost-divider {
+  height: 1px;
+  background-color: var(--forge-theme-outline);
+  margin: 0.25rem 0;
+  width: 100%;
+}
+
+.total-row {
+  margin-top: 0.25rem;
+}
+
+.total-label {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--forge-theme-on-surface);
+}
+
+.total-value {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--forge-theme-success);
+}
+
 #mobile-order-dialog forge-scaffold {
   height: auto;
   width: 100%;
@@ -651,4 +720,241 @@ span.item-total {
 
 forge-dialog::part(surface) {
   box-shadow: var(--forge-elevation-24);
+}
+
+/* Ensure custom toast appears above Forge dialogs */
+forge-dialog {
+  z-index: 9999;
+}
+
+/* Custom toast styling */
+.custom-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background-color: var(--forge-theme-success);
+  color: white;
+  border-radius: 8px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 99999;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  max-width: 90vw;
+  min-width: 200px;
+  pointer-events: none;
+}
+
+.custom-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.custom-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.custom-toast-content forge-icon {
+  color: white;
+  font-size: 18px;
+}
+
+.custom-toast-message {
+  color: white;
+  white-space: nowrap;
+}
+
+/* Mobile-specific custom toast adjustments */
+@media (max-width: 1079px) {
+  .custom-toast {
+    top: 120px;
+    max-width: calc(100vw - 32px);
+    min-width: 250px;
+    z-index: 999999;
+    background-color: var(--forge-theme-success);
+  }
+}
+
+/* Order Confirmation Dialog Styles */
+#order-confirmation-dialog {
+  --forge-dialog-width: 600px;
+  --forge-dialog-max-width: 90vw;
+  --forge-dialog-max-height: 90vh;
+}
+
+.order-confirmation-content {
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.confirmation-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--forge-theme-outline);
+}
+
+.confirmation-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.confirmation-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--forge-theme-on-surface);
+  font-weight: 600;
+}
+
+/* Customer Information Grid */
+.customer-info-grid,
+.payment-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.info-label {
+  color: var(--forge-theme-text-high);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.info-value {
+  color: var(--forge-theme-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Order Details Grid */
+.order-details-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.detail-label {
+  color: var(--forge-theme-on-surface);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.detail-value {
+  color: var(--forge-theme-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.detail-divider {
+  height: 1px;
+  background-color: var(--forge-theme-outline);
+}
+
+.total-row {
+  padding: 0.25rem 0;
+}
+
+.total-row .detail-label {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.total-row .detail-value {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--forge-theme-success);
+}
+
+/* Terms and Conditions */
+.terms-content {
+  background-color: var(--forge-theme-surface);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--forge-theme-outline);
+}
+
+.terms-content p {
+  margin: 0 0 0.75rem 0;
+  color: var(--forge-theme-on-surface);
+}
+
+.terms-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--forge-theme-on-surface-variant);
+  font-size: 14px;
+}
+
+.terms-list li {
+  margin-bottom: 0.5rem;
+}
+
+.terms-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Confirmation Items List */
+#confirmation-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirmation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--forge-theme-surface);
+  border-radius: 8px;
+  border: 1px solid var(--forge-theme-outline);
+}
+
+.confirmation-item-name {
+  font-weight: 500;
+  color: var(--forge-theme-on-surface);
+  flex: 1;
+}
+
+.confirmation-item-details {
+  text-align: right;
+  color: var(--forge-theme-on-surface-variant);
+  font-size: 14px;
+}
+
+.confirmation-item-quantity {
+  font-weight: 600;
+  color: var(--forge-theme-on-surface);
+}
+
+.confirmation-item-price {
+  color: var(--forge-theme-success);
+  font-weight: 600;
+}
+
+forge-card {
+  --forge-card-padding: 10px;
+}
+
+.item-details p {
+  margin: 0;
+}
+
+.item-details p:last-child {
+  margin-top: 0.5rem;
 }
