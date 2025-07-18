@@ -57,6 +57,22 @@ html {
   --forge-app-bar-foreground: #fff;
 }
 
+.inmate-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 1rem;
+}
+
+.inmate-info p {
+  margin: 0;
+}
+
+.inmate-info-name-id {
+  display: flex;
+  flex-direction: column;
+}
+
 .drawer-content {
   padding: 0rem 1rem;;
 }
@@ -777,6 +793,12 @@ forge-dialog {
     min-width: 250px;
     z-index: 999999;
     background-color: var(--forge-theme-success);
+    position: fixed !important;
+    transform: translateX(-50%) translateY(-100px) !important;
+  }
+  
+  .custom-toast.show {
+    transform: translateX(-50%) translateY(0) !important;
   }
 }
 

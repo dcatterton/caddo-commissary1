@@ -338,7 +338,7 @@ function updateAddButtonState(input, productName, basePrice, quantity) {
   const newItemTotal = basePrice * quantity;
   const totalSubtotalAfterAdd = currentSubtotal + newItemTotal;
   const totalAfterTax = totalSubtotalAfterAdd; // No sales tax
-  const remainingBalance = 21.72;
+  const remainingBalance = 617.94;
   
   if (totalAfterTax > remainingBalance) {
     // Hide the button and show badge instead
@@ -361,7 +361,7 @@ function updateAddButtonState(input, productName, basePrice, quantity) {
 function updateAllAddButtonStates() {
   const itemRights = document.querySelectorAll('.item-right');
   const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const remainingBalance = 21.72;
+  const remainingBalance = 617.94;
   
   itemRights.forEach(itemRight => {
     const addButton = itemRight.querySelector('forge-button');
@@ -427,7 +427,7 @@ function addToOrder(productName, price) {
     const newItemTotal = price * quantity;
     const totalSubtotalAfterAdd = currentSubtotal + newItemTotal;
     const totalAfterTax = totalSubtotalAfterAdd; // No sales tax
-    const remainingBalance = 21.72;
+    const remainingBalance = 617.94;
     
     // Check if adding this item would exceed the balance
     if (totalAfterTax > remainingBalance) {
@@ -456,8 +456,13 @@ function addToOrder(productName, price) {
     showAddToOrderToast(quantity, productName);
     
     // Reset quantity field and price display to default state
-    quantityField.value = 1;
-    updatePriceDisplay(quantityField, productName, price);
+    if (quantityField) {
+      quantityField.value = 1;
+      // Trigger change and input events to update the UI
+      quantityField.dispatchEvent(new Event('change'));
+      quantityField.dispatchEvent(new Event('input'));
+      updatePriceDisplay(quantityField, productName, price);
+    }
   }
 }
 
@@ -575,8 +580,8 @@ function updateOrderDisplay() {
     if (orderContainer) orderContainer.innerHTML = emptyMessage;
     if (totalElement) totalElement.textContent = '$0.00';
     if (mobileOrderTotal) mobileOrderTotal.textContent = '$0.00';
-    if (mobileRemainingBalance) mobileRemainingBalance.textContent = '$21.72';
-    if (headerRemainingBalance) headerRemainingBalance.textContent = '$21.72';
+    if (mobileRemainingBalance) mobileRemainingBalance.textContent = '$617.94';
+    if (headerRemainingBalance) headerRemainingBalance.textContent = '$617.94';
     if (headerMeter) headerMeter.value = 0;
     if (clearOrderBtn) clearOrderBtn.style.display = 'none';
     if (drawerSubtotal) drawerSubtotal.textContent = '$0.00';
@@ -643,11 +648,11 @@ function updateOrderDisplay() {
   const orderTotal = total + salesTax;
   
   const totalText = `$${orderTotal.toFixed(2)}`;
-  const remainingBalance = Math.max(0, 21.72 - orderTotal);
+  const remainingBalance = Math.max(0, 617.94 - orderTotal);
   
   // Calculate meter progress based on used balance (including tax)
   // Meter should show the percentage of balance used, not remaining
-  const initialBalance = 21.72;
+  const initialBalance = 617.94;
   const usedBalance = Math.min(orderTotal, initialBalance);
   const meterProgress = Math.round((usedBalance / initialBalance) * 100);
   
@@ -704,7 +709,7 @@ function increaseOrderQuantity(productName) {
     }, 0);
     
     const totalAfterTax = currentSubtotal; // No sales tax
-    const remainingBalance = 21.72;
+    const remainingBalance = 617.94;
     
     if (totalAfterTax > remainingBalance) {
       alert(`Cannot increase quantity. This would exceed your remaining balance of $${remainingBalance.toFixed(2)}.`);
@@ -744,7 +749,7 @@ function updateOrderQuantity(productName, newQuantity) {
     }, 0);
     
     const totalAfterTax = currentSubtotal; // No sales tax
-    const remainingBalance = 21.72;
+    const remainingBalance = 617.94;
     
     if (totalAfterTax > remainingBalance) {
       alert(`Cannot set quantity to ${quantity}. This would exceed your remaining balance of $${remainingBalance.toFixed(2)}.`);
@@ -781,25 +786,23 @@ function showAddToOrderToast(quantity, productName) {
   // Add to page
   document.body.appendChild(toast);
   
-  // Debug: Log toast creation
-  console.log('Toast created for mobile:', window.innerWidth < 1080);
-  console.log('Toast element:', toast);
-  console.log('Toast in DOM:', document.body.contains(toast));
+  // Force a reflow to ensure the element is properly rendered
+  toast.offsetHeight;
   
   // Show the toast with animation
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     toast.classList.add('show');
-    console.log('Toast shown, classes:', toast.className);
-    console.log('Toast visible:', toast.offsetHeight > 0);
     
-    // Fallback: If toast is not visible after 100ms, show alert
+    // Fallback for mobile only: If toast is not visible after 200ms, show alert
     setTimeout(() => {
-      if (toast.offsetHeight === 0 || toast.offsetWidth === 0) {
-        console.log('Toast not visible, showing alert fallback');
+      const rect = toast.getBoundingClientRect();
+      const isMobile = window.innerWidth < 1080;
+      if (isMobile && (rect.height === 0 || rect.width === 0 || rect.top < 0)) {
+        console.log('Toast not visible on mobile, showing alert fallback');
         alert(`${quantity} ${quantity === 1 ? 'item' : 'items'} added to order`);
       }
-    }, 100);
-  }, 10);
+    }, 200);
+  });
   
   // Remove toast after duration
   setTimeout(() => {
@@ -807,7 +810,6 @@ function showAddToOrderToast(quantity, productName) {
     setTimeout(() => {
       if (document.body.contains(toast)) {
         document.body.removeChild(toast);
-        console.log('Toast removed');
       }
     }, 300); // Wait for fade out animation
   }, 3000);
@@ -841,7 +843,7 @@ function populateConfirmationDialog() {
   const subtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const salesTax = subtotal * 0.00;
   const orderTotal = subtotal + salesTax;
-  const remainingBalance = 21.72 - orderTotal;
+  const remainingBalance = 617.94 - orderTotal;
   
   // Set current date
   const today = new Date();
@@ -1016,6 +1018,62 @@ function updateFullScreenButtonState() {
   }
 }
 
+// Handle responsive drawer behavior
+function handleDrawerVisibility() {
+  const drawer = document.querySelector('forge-drawer');
+  const mobileOrderDialog = document.getElementById('mobile-order-sheet');
+  const isSmallScreen = window.innerWidth < 1080;
+  
+  if (isSmallScreen) {
+    // Hide drawer on small screens
+    if (drawer) {
+      drawer.style.display = 'none';
+    }
+    // Show mobile order dialog only when there are items
+    if (mobileOrderDialog) {
+      mobileOrderDialog.style.display = 'block';
+      // Always check current order state when switching to mobile
+      if (currentOrder && currentOrder.length > 0) {
+        mobileOrderDialog.open = true;
+      } else {
+        mobileOrderDialog.open = false;
+      }
+    }
+  } else {
+    // Show drawer on large screens
+    if (drawer) {
+      drawer.style.display = '';
+    }
+    // Hide mobile order dialog on large screens
+    if (mobileOrderDialog) {
+      mobileOrderDialog.style.display = 'none';
+      mobileOrderDialog.open = false; // Close it if it was open
+    }
+  }
+}
+
+// Function to select a category and update UI
+function selectCategory(categoryValue) {
+  const chipSet = document.getElementById('category-chips');
+  const chips = chipSet.querySelectorAll('forge-chip');
+  
+  // Deselect all chips
+  chips.forEach(c => c.selected = false);
+  
+  // Find and select the target chip
+  const targetChip = Array.from(chips).find(chip => chip.value === categoryValue);
+  if (targetChip) {
+    targetChip.selected = true;
+  }
+  
+  // Update current selection
+  currentSelectedLetter = categoryValue === 'all' ? 'all' : 
+                         categoryValue.toUpperCase();
+  
+  // Render products with current selection and search term
+  renderProducts(currentSelectedLetter, currentSearchTerm);
+}
+
   // Initialize the page
   document.addEventListener('DOMContentLoaded', function() {
     // Set initial full screen button state
@@ -1066,39 +1124,7 @@ function updateFullScreenButtonState() {
     });
   }
   
-  // Handle responsive drawer behavior
-  function handleDrawerVisibility() {
-    const drawer = document.querySelector('forge-drawer');
-    const mobileOrderDialog = document.getElementById('mobile-order-sheet');
-    const isSmallScreen = window.innerWidth < 1080;
-    
-    if (isSmallScreen) {
-      // Hide drawer on small screens
-      if (drawer) {
-        drawer.style.display = 'none';
-      }
-      // Show mobile order dialog only when there are items
-      if (mobileOrderDialog) {
-        mobileOrderDialog.style.display = 'block';
-        // Always check current order state when switching to mobile
-        if (currentOrder && currentOrder.length > 0) {
-          mobileOrderDialog.open = true;
-        } else {
-          mobileOrderDialog.open = false;
-        }
-      }
-    } else {
-      // Show drawer on large screens
-      if (drawer) {
-        drawer.style.display = '';
-      }
-      // Hide mobile order dialog on large screens
-      if (mobileOrderDialog) {
-        mobileOrderDialog.style.display = 'none';
-        mobileOrderDialog.open = false; // Close it if it was open
-      }
-    }
-  }
+
   
   // Initial check
   handleDrawerVisibility();
@@ -1154,22 +1180,5 @@ function updateFullScreenButtonState() {
     });
   });
   
-  // Function to select a category and update UI
-  function selectCategory(categoryValue) {
-    // Deselect all chips
-    chips.forEach(c => c.selected = false);
-    
-    // Find and select the target chip
-    const targetChip = Array.from(chips).find(chip => chip.value === categoryValue);
-    if (targetChip) {
-      targetChip.selected = true;
-    }
-    
-    // Update current selection
-    currentSelectedLetter = categoryValue === 'all' ? 'all' : 
-                           categoryValue.toUpperCase();
-    
-    // Render products with current selection and search term
-    renderProducts(currentSelectedLetter, currentSearchTerm);
-  }
+
 }); 
