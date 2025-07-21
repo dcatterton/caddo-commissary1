@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="https://cdn.forge.tylertech.com/v1/libs/@tylertech/forge@3.9.2/forge.css" />
   <script type="module" src="https://cdn.forge.tylertech.com/v1/libs/@tylertech/forge@3.9.2/index.js"></script>
   <link rel="stylesheet" href="https://cdn.forge.tylertech.com/v1/css/tyler-font.css" />
-  <link rel="stylesheet" href="../../../shared.css" />
   <script src="quantity-field.js"></script>
   <script src="products.js"></script>
 </head>
@@ -23,12 +22,15 @@
     <div slot="header">
       <forge-app-bar title-text="Caddo Parish, LA" class="app-bar">
         <forge-icon slot="logo" name="tyler_talking_t_logo" external></forge-icon>
-        <div slot="end" class="inmate-info"><forge-icon name="person" external></forge-icon>
-          <div class="inmate-info-name-id">
-          <p class="forge-typography--body1">Leanthony Moore</p>
-          <p class="forge-typography--label1" style="opacity: 0.5;">ID: 145458</p>
-        </div>
-        </div>
+        <a href="https://caddo-commissary2.vercel.app" slot="end" style="text-decoration: none; color: inherit;">
+          <div class="inmate-info">
+            <forge-icon name="person" external></forge-icon>
+            <div class="inmate-info-name-id">
+            <p class="forge-typography--body1">Leanthony Moore</p>
+            <p class="forge-typography--label1" style="opacity: 0.5;">ID: 145458</p>
+          </div>
+          </div>
+        </a>
       </forge-app-bar>
 
       <!-- <forge-card style="--forge-card-padding:0.5rem 1.5rem 0.5rem 0rem; --forge-card-shape: 0;">
@@ -149,7 +151,7 @@
     </div>
   </forge-scaffold>
 
-  <forge-dialog id="mobile-order-sheet" persistent mode="nonmodal" preset="bottom-sheet" size-strategy="container-inline" label="Order Summary" description="Review your commissary order">
+  <forge-dialog id="mobile-order-sheet" mode="nonmodal" preset="bottom-sheet" size-strategy="container-inline" label="Order Summary" description="Review your commissary order">
     <forge-button variant="filled" onclick="showMobileOrderDialog()" full-width class="mobile-order-button">
       <forge-icon slot="start" name="shopping_cart" external></forge-icon>
       <p class="forge-typography--heading2">Review your order – <span id="mobile-order-total">$0.00</span> total</p>
@@ -159,7 +161,7 @@
   <!-- Mobile Order Dialog -->
   <forge-dialog id="mobile-order-dialog" label="Order Details" description="Review and submit your commissary order" fullscreen>
     <forge-scaffold>
-      <forge-toolbar slot="header">
+      <forge-toolbar slot="header" auto-height style="--forge-toolbar-padding-block: 1rem; --forge-toolbar-padding-inline: 2rem;">
         <h2 slot="start" class="forge-typography--heading3">Order Details</h2>
         <forge-icon-button slot="end" aria-label="Close dialog" onclick="closeMobileOrderDialog()">
           <forge-icon name="close" external></forge-icon>
@@ -168,7 +170,7 @@
       <div slot="body" class="mobile-order-dialog-content">
         <!-- Order items will be dynamically loaded here -->
       </div>
-      <forge-toolbar slot="footer" inverted auto-height style="--forge-toolbar-padding-block: 1rem;">
+      <forge-toolbar slot="footer" inverted auto-height style="--forge-toolbar-padding-block: 2rem; --forge-toolbar-padding-inline: 2rem;">
         <div slot="center" class="mobile-order-summary">
           <div class="mobile-cost-breakdown">
             <div class="cost-row">
@@ -189,6 +191,55 @@
         <forge-button slot="end" variant="raised" onclick="submitOrder()">
           Submit order
         </forge-button>
+      </forge-toolbar>
+    </forge-scaffold>
+  </forge-dialog>
+
+  <!-- Quantity Selection Dialog -->
+  <forge-dialog id="quantity-selection-dialog" label="Add item to order" description="Select quantity for this item">
+    <forge-scaffold>
+      <forge-toolbar slot="header" auto-height style="--forge-toolbar-padding-block: 2rem 1rem;">
+        <h2 slot="start" class="forge-typography--heading3" id="quantity-dialog-title">Add item to order</h2>
+        <forge-icon-button slot="end" aria-label="Close dialog" onclick="closeQuantityDialog()">
+          <forge-icon name="close" external></forge-icon>
+        </forge-icon-button>
+      </forge-toolbar>
+      
+      <div slot="body" class="quantity-dialog-content">
+        <p class="forge-typography--subheading3" style="margin: 0px 0px 1rem 0px;">Select quantity</p>
+        <div class="quantity-options-grid" id="quantity-options-container">
+          <!-- Quantity options will be dynamically generated here -->
+        </div>
+        
+        <div class="custom-quantity-section">
+          <p class="forge-typography--subheading3" style="margin-top:0px;">Other quantity</p>
+          <div class="custom-quantity-row">
+            <forge-text-field>
+              <input type="number" id="custom-quantity-input" min="1" placeholder="Enter custom quantity" onclick="clearRadioSelection()">
+            </forge-text-field>
+            <div class="custom-quantity-total">
+              <span class="total-label">Total:</span>
+              <span class="total-amount" id="custom-quantity-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <forge-toolbar slot="footer" inverted auto-height style="--forge-toolbar-padding-block: 1rem 2rem; --forge-toolbar-padding-inline: 2rem;">
+        <div slot="start">
+          <div class="quantity-dialog-balance-section">
+            <p class="forge-typography--body1">Remaining balance: <span class="balance-amount forge-typography--heading2" id="quantity-dialog-remaining-balance">$617.94</span></p>
+            <forge-meter id="quantity-dialog-meter" max="100" density="small" theme="success"></forge-meter>
+          </div>
+        </div>
+        <div slot="end">
+          <forge-button variant="outlined" onclick="closeQuantityDialog()">
+            Cancel
+          </forge-button>
+          <forge-button variant="raised" id="add-to-order-btn" theme="success">
+            Add to order
+          </forge-button>
+        </div>
       </forge-toolbar>
     </forge-scaffold>
   </forge-dialog>
@@ -218,11 +269,11 @@
           <div class="customer-info-grid">
             <div class="info-row">
               <span class="info-label">Inmate ID:</span>
-              <span class="info-value">#12345</span>
+              <span class="info-value">145458</span>
             </div>
             <div class="info-row">
               <span class="info-label">Name:</span>
-              <span class="info-value">John Doe</span>
+              <span class="info-value">Leanthony Moore</span>
             </div>
             <div class="info-row">
               <span class="info-label">Facility:</span>

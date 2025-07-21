@@ -131,17 +131,6 @@ forge-button[disabled] {
   cursor: not-allowed;
 }
 
-/* Exceeds Balance badge styling */
-.item-right forge-badge {
-  --forge-badge-shape: 16px;
-  --forge-badge-padding-inline: 12px;
-  --forge-badge-padding-block: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-left: auto;
-  align-self: center;
-}
-
 .disable-scrollbars::-webkit-scrollbar {
   background: transparent;
   /* Chrome/Safari/Webkit */
@@ -225,13 +214,6 @@ forge-chip {
   padding-right: 20px;
 }
 
-.quantity-field {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: 175px;
-}
-
 /* Order item styles */
 .order-item {
   display: flex;
@@ -305,6 +287,26 @@ forge-chip {
 
 .remove-btn forge-icon {
   font-size: 16px;
+}
+
+/* Exceeds balance badge styling */
+.item-right forge-badge {
+  --forge-badge-shape: 16px;
+  --forge-badge-padding-inline: 12px;
+  --forge-badge-padding-block: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Product card styling when item exceeds balance */
+.product-item:has(forge-badge) {
+  opacity: 0.5;
+  /* background-color: var(--forge-theme-surface-dim); */
+}
+
+.product-item:has(forge-badge) .item-price {
+  color: var(--forge-theme-error);
 }
 
 /* Clear order button in toolbar */
@@ -511,7 +513,7 @@ span.item-total {
 
 /* Mobile dialog order items */
 .mobile-order-dialog-content .order-item {
-  padding: 2rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--forge-theme-outline);
   margin: 0;
 }
@@ -522,6 +524,44 @@ span.item-total {
 
 .mobile-order-dialog-content .order-item-header {
   margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mobile-order-dialog-content .order-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.mobile-order-dialog-content .order-item-left img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-order-dialog-content .order-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.mobile-order-dialog-content .order-item-details .product-name {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.mobile-order-dialog-content .order-item-details p:last-child {
+  margin: 0;
+  color: var(--forge-theme-on-surface-variant);
+  font-size: 14px;
 }
 
 .mobile-order-dialog-content .order-item-controls {
@@ -788,17 +828,11 @@ forge-dialog {
 /* Mobile-specific custom toast adjustments */
 @media (max-width: 1079px) {
   .custom-toast {
-    top: 120px;
+    top: 20px;
     max-width: calc(100vw - 32px);
     min-width: 250px;
     z-index: 999999;
     background-color: var(--forge-theme-success);
-    position: fixed !important;
-    transform: translateX(-50%) translateY(-100px) !important;
-  }
-  
-  .custom-toast.show {
-    transform: translateX(-50%) translateY(0) !important;
   }
 }
 
@@ -811,7 +845,7 @@ forge-dialog {
 
 .order-confirmation-content {
   overflow-y: auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .confirmation-section {
@@ -826,7 +860,7 @@ forge-dialog {
 }
 
 .confirmation-section h3 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0 0;
   color: var(--forge-theme-on-surface);
   font-weight: 600;
 }
@@ -979,4 +1013,364 @@ forge-card {
 
 .item-details p:last-child {
   margin-top: 0.5rem;
+}
+
+/* Quantity Selection Dialog Styles */
+#quantity-selection-dialog {
+  --forge-dialog-width: 100vw;
+  --forge-dialog-height: 100vh;
+  --forge-dialog-max-width: 100vw;
+  --forge-dialog-max-height: 100vh;
+  --forge-dialog-padding: 0;
+  --forge-dialog-shape: 0;
+}
+
+#quantity-selection-dialog forge-scaffold {
+  height: 100vh;
+  width: 100vw;
+}
+
+#quantity-selection-dialog forge-scaffold > [slot="body"] {
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: var(--forge-theme-surface-container-minimum);
+}
+
+@media (max-width: 768px) {
+  #quantity-selection-dialog {
+    --forge-dialog-width: 100vw;
+    --forge-dialog-height: 100vh;
+    --forge-dialog-max-width: 100vw;
+    --forge-dialog-max-height: 100vh;
+    --forge-dialog-padding: 0;
+  }
+  
+  #quantity-selection-dialog forge-scaffold {
+    height: 100vh;
+    width: 100vw;
+  }
+  
+  #quantity-selection-dialog forge-scaffold > [slot="body"] {
+    padding: 1rem;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+}
+
+.quantity-dialog-content {
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.quantity-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quantity-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.quantity-option {
+  border: 1px solid var(--forge-theme-outline);
+  border-radius: 4px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--forge-theme-surface);
+  display: flex;
+  align-items: center;
+}
+
+/* .quantity-option:hover:not(.disabled) {
+  border-color: var(--forge-theme-success);
+  background-color: var(--forge-theme-success-container-minimum);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+} */
+
+.quantity-option.selected {
+  border-color: var(--forge-theme-primary);
+  background-color: rgba(15, 155, 15, 0.014);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
+  transform: translateY(-2px);
+}
+
+.quantity-option.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background-color: var(--forge-theme-surface-dim);
+}
+
+.quantity-option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.quantity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+/* Check icon styling */
+.quantity-check-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+  color: var(--forge-theme-success);
+}
+
+.quantity-check-icon forge-icon {
+  font-size: 28px;
+  color: var(--forge-theme-success);
+}
+
+.quantity-number {
+  font-size: 18;
+  font-weight: 600;
+  color: var(--forge-theme-on-surface);
+}
+
+.quantity-price {
+  font-size: 16px;
+  color: var(--forge-theme-success);
+  font-weight: 500;
+}
+
+.custom-quantity-section {
+  padding-top: 1rem;
+}
+
+.custom-quantity-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--forge-theme-on-surface);
+  font-size: 20px;
+}
+
+.custom-quantity-section forge-text-field {
+  width: 250px;
+  background-color: var(--forge-theme-surface);
+}
+
+.custom-quantity-row {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.custom-quantity-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 160px;
+}
+
+.custom-quantity-total .total-label {
+  font-size: 14px;
+  color: var(--forge-theme-on-surface-variant);
+  font-weight: 500;
+}
+
+.custom-quantity-total .total-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--forge-theme-success);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .quantity-options-grid {
+    gap: 0.75rem;
+  }
+  
+  .quantity-row {
+    gap: 0.75rem;
+  }
+  
+  .quantity-option {
+    padding: 1rem;
+    min-height: 80px;
+  }
+  
+  .quantity-dialog-content {
+    padding: 1rem;
+  }
+  
+  .mobile-quantity-body .quantity-options-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  
+  .mobile-quantity-body .quantity-option {
+    padding: 1.25rem;
+    min-height: 90px;
+    border-radius: 12px;
+  }
+  
+  .mobile-quantity-body .quantity-number {
+    font-size: 20px;
+  }
+  
+  .mobile-quantity-body .quantity-price {
+    font-size: 16px;
+  }
+}
+
+/* Mobile Quantity Dialog Styles */
+.mobile-quantity-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--forge-theme-surface);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-quantity-content {
+  background-color: var(--forge-theme-surface);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-quantity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--forge-theme-outline);
+  background-color: var(--forge-theme-surface);
+  flex-shrink: 0;
+}
+
+.mobile-quantity-header h2 {
+  margin: 0;
+}
+
+.mobile-quantity-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: var(--forge-theme-surface-container-minimum);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mobile-quantity-footer {
+  padding: 1rem 2rem 3rem 2rem;
+  border-top: 1px solid var(--forge-theme-outline);
+  background-color: var(--forge-theme-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.mobile-quantity-balance {
+  flex: 0.75;
+}
+
+.mobile-quantity-buttons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .mobile-quantity-content {
+    width: 98vw;
+    max-height: 95vh;
+  }
+  
+  .mobile-quantity-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mobile-quantity-buttons {
+    justify-content: flex-end;
+  }
+}
+
+.mobile-quantity-body .custom-quantity-section {
+  padding-top: 0;
+}
+
+.mobile-quantity-body .custom-quantity-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--forge-theme-on-surface);
+  font-size: 18px;
+}
+
+.mobile-quantity-body .custom-quantity-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.mobile-quantity-body .custom-quantity-section forge-text-field {
+  flex: 1;
+  max-width: 250px;
+}
+
+.mobile-quantity-body .custom-quantity-total {
+  min-width: 140px;
+}
+
+.mobile-quantity-body .custom-quantity-total .total-label {
+  font-size: 14px;
+  color: var(--forge-theme-on-surface-variant);
+  font-weight: 500;
+}
+
+.mobile-quantity-body .custom-quantity-total .total-amount {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--forge-theme-success);
+}
+
+/* Quantity Dialog Balance Section */
+.quantity-dialog-balance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.quantity-dialog-balance-section p {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.quantity-dialog-balance-section forge-meter {
+  width: 100%;
+  height: 8px;
+  min-width: 120px;
+}
+
+/* Mobile quantity dialog balance section */
+.mobile-quantity-balance .quantity-dialog-balance-section {
+  width: 100%;
+}
+
+.mobile-quantity-balance .quantity-dialog-balance-section forge-meter {
+  width: 100%;
+  min-width: 150px;
 }
