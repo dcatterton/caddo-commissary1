@@ -316,7 +316,7 @@ function showQuantityDialog(productName, price) {
   currentQuantityDialogPrice = price;
   
   // Use mobile dialog on mobile devices
-  if (window.innerWidth < 1080) {
+  if (window.innerWidth < 800) {
     // Create a completely new mobile dialog element each time
     createMobileQuantityDialog(productName, price);
   } else {
@@ -999,7 +999,7 @@ function addSelectedQuantityToOrder(event = null) {
     }, 10);
     
     // Method 4: Mobile-specific force close
-    if (window.innerWidth < 1080) {
+    if (window.innerWidth < 800) {
       // Try multiple approaches for mobile
       setTimeout(() => {
         dialog.open = false;
@@ -1247,6 +1247,34 @@ function updateClearSavedOrderButton() {
   }
 }
 
+// Show full screen prompt to user
+function showFullScreenPrompt() {
+  const toast = document.createElement('div');
+  toast.className = 'custom-toast';
+  
+  toast.innerHTML = `
+    <div class="custom-toast-content">
+      <forge-icon name="fullscreen" external></forge-icon>
+      <span class="custom-toast-message">Click the full screen button or press F11 to enter full screen mode</span>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 6000); // Show for 6 seconds
+}
+
 // This function is now replaced by addSelectedQuantityToOrder()
 // Keeping for backward compatibility but it's no longer used
 function addToOrder(productName, price) {
@@ -1483,7 +1511,7 @@ function updateOrderDisplay() {
   }, 50);
   
   // Ensure mobile order sheet state is correct for current screen size
-  if (window.innerWidth < 1080) {
+  if (window.innerWidth < 800) {
     handleDrawerVisibility();
   }
 }
@@ -1600,7 +1628,7 @@ function showAddToOrderToast(quantity, productName) {
   document.body.appendChild(toast);
   
   // Debug: Log toast creation
-  console.log('Toast created for mobile:', window.innerWidth < 1080);
+  console.log('Toast created for mobile:', window.innerWidth < 800);
   console.log('Toast element:', toast);
   console.log('Toast in DOM:', document.body.contains(toast));
   
@@ -1938,7 +1966,7 @@ function closeMobileQuantityDialog() {
 function handleDrawerVisibility() {
   const drawer = document.querySelector('forge-drawer');
   const mobileOrderDialog = document.getElementById('mobile-order-sheet');
-  const isSmallScreen = window.innerWidth < 1080;
+  const isSmallScreen = window.innerWidth < 800;
   
   if (isSmallScreen) {
     // Hide drawer on small screens
@@ -2044,8 +2072,41 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set initial full screen button state
   updateFullScreenButtonState();
   
-  // Don't automatically request full screen on page load
-  // Users should manually trigger full screen if they want it
+  // Automatically request full screen on page load
+  // Note: Most browsers require user interaction before allowing full screen
+  // We'll try to request it, but it may not work without user interaction
+  setTimeout(() => {
+    if (isFullScreenSupported()) {
+      // Try to request full screen automatically
+      try {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(error => {
+            console.log('Auto full screen failed (requires user interaction):', error);
+            showFullScreenPrompt();
+          });
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen().catch(error => {
+            console.log('Auto full screen failed (requires user interaction):', error);
+            showFullScreenPrompt();
+          });
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen().catch(error => {
+            console.log('Auto full screen failed (requires user interaction):', error);
+            showFullScreenPrompt();
+          });
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen().catch(error => {
+            console.log('Auto full screen failed (requires user interaction):', error);
+            showFullScreenPrompt();
+          });
+        }
+      } catch (error) {
+        console.log('Auto full screen failed:', error);
+        showFullScreenPrompt();
+      }
+    }
+  }, 1000);
   
   // Render all products initially
   renderProducts();
@@ -2090,6 +2151,31 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Listen for window resize
   window.addEventListener('resize', handleDrawerVisibility);
+  
+  // Add click listener to trigger full screen on first user interaction
+  let hasUserInteracted = false;
+  document.addEventListener('click', function() {
+    if (!hasUserInteracted && isFullScreenSupported()) {
+      hasUserInteracted = true;
+      // Try to enter full screen on first click
+      setTimeout(() => {
+        try {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+          } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+          }
+        } catch (error) {
+          console.log('Full screen on click failed:', error);
+        }
+      }, 100);
+    }
+  }, { once: true }); // Only trigger once
   
   // Add keyboard shortcuts for full screen
   document.addEventListener('keydown', function(event) {
