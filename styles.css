@@ -1382,3 +1382,34 @@ forge-card {
   width: 100%;
   min-width: 150px;
 }
+
+
+/* Full Screen Prompt Dialog Styles */
+#fullscreen-prompt-dialog {
+  --forge-dialog-width: 500px;
+  --forge-dialog-max-width: 90vw;
+}
+
+.fullscreen-prompt-content {
+  padding: 1rem 0;
+}
+
+.fullscreen-prompt-message {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fullscreen-prompt-message h3 {
+  margin: 0;
+  color: var(--forge-theme-on-surface);
+}
+
+.fullscreen-prompt-message p {
+  margin: 0;
+  color: var(--forge-theme-text-medium);
+  line-height: 1.5;
+  max-width: 400px;
+}
