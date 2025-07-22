@@ -674,6 +674,9 @@ function addSelectedQuantityToMobileOrder() {
   
   updateOrderDisplay();
   
+  // Save order to localStorage
+  saveOrderToStorage();
+  
   // Show toast notification for added items
   showAddToOrderToast(quantity, currentQuantityDialogProduct);
   
@@ -973,6 +976,9 @@ function addSelectedQuantityToOrder(event = null) {
   
   updateOrderDisplay();
   
+  // Save order to localStorage
+  saveOrderToStorage();
+  
   // Show toast notification for added items
   showAddToOrderToast(quantity, currentQuantityDialogProduct);
   
@@ -1071,6 +1077,175 @@ function addSelectedQuantityToOrder(event = null) {
 
 // Order management
 let currentOrder = [];
+
+// Local storage keys
+const ORDER_STORAGE_KEY = 'caddo_commissary_order';
+const ORDER_TIMESTAMP_KEY = 'caddo_commissary_order_timestamp';
+const ORDER_EXPIRY_HOURS = 24; // Orders expire after 24 hours
+
+// Save order to localStorage
+function saveOrderToStorage() {
+  try {
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(currentOrder));
+    localStorage.setItem(ORDER_TIMESTAMP_KEY, Date.now().toString());
+    console.log('Order saved to localStorage:', currentOrder);
+    
+    // Update clear button visibility
+    updateClearSavedOrderButton();
+  } catch (error) {
+    console.error('Error saving order to localStorage:', error);
+  }
+}
+
+// Load order from localStorage
+function loadOrderFromStorage() {
+  try {
+    const savedOrder = localStorage.getItem(ORDER_STORAGE_KEY);
+    const savedTimestamp = localStorage.getItem(ORDER_TIMESTAMP_KEY);
+    
+    if (savedOrder && savedTimestamp) {
+      const orderAge = Date.now() - parseInt(savedTimestamp);
+      const orderAgeHours = orderAge / (1000 * 60 * 60);
+      
+      // Check if order has expired (older than 24 hours)
+      if (orderAgeHours > ORDER_EXPIRY_HOURS) {
+        console.log('Saved order has expired, clearing localStorage');
+        clearOrderFromStorage();
+        return false;
+      }
+      
+      const parsedOrder = JSON.parse(savedOrder);
+      if (Array.isArray(parsedOrder)) {
+        currentOrder = parsedOrder;
+        console.log('Order loaded from localStorage:', currentOrder);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading order from localStorage:', error);
+    clearOrderFromStorage();
+  }
+  return false;
+}
+
+// Clear order from localStorage
+function clearOrderFromStorage() {
+  try {
+    localStorage.removeItem(ORDER_STORAGE_KEY);
+    localStorage.removeItem(ORDER_TIMESTAMP_KEY);
+    console.log('Order cleared from localStorage');
+    
+    // Update clear button visibility
+    updateClearSavedOrderButton();
+  } catch (error) {
+    console.error('Error clearing order from localStorage:', error);
+  }
+}
+
+// Check if there's a saved order on page load
+function checkForSavedOrder() {
+  const hasSavedOrder = loadOrderFromStorage();
+  if (hasSavedOrder && currentOrder.length > 0) {
+    // Show a notification that a saved order was found
+    showSavedOrderNotification();
+  }
+}
+
+// Show notification about saved order
+function showSavedOrderNotification() {
+  const toast = document.createElement('div');
+  toast.className = 'custom-toast';
+  
+  toast.innerHTML = `
+    <div class="custom-toast-content">
+      <forge-icon name="restore" external></forge-icon>
+      <span class="custom-toast-message">Previous order restored from ${formatOrderAge()}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 4000);
+}
+
+// Format the age of the saved order
+function formatOrderAge() {
+  try {
+    const savedTimestamp = localStorage.getItem(ORDER_TIMESTAMP_KEY);
+    if (savedTimestamp) {
+      const orderAge = Date.now() - parseInt(savedTimestamp);
+      const orderAgeMinutes = Math.floor(orderAge / (1000 * 60));
+      
+      if (orderAgeMinutes < 1) {
+        return 'just now';
+      } else if (orderAgeMinutes < 60) {
+        return `${orderAgeMinutes} minute${orderAgeMinutes === 1 ? '' : 's'} ago`;
+      } else {
+        const orderAgeHours = Math.floor(orderAgeMinutes / 60);
+        return `${orderAgeHours} hour${orderAgeHours === 1 ? '' : 's'} ago`;
+      }
+    }
+  } catch (error) {
+    console.error('Error formatting order age:', error);
+  }
+  return 'recently';
+}
+
+// Clear saved order function
+function clearSavedOrder() {
+  if (confirm('Are you sure you want to clear your saved order? This action cannot be undone.')) {
+    currentOrder = [];
+    clearOrderFromStorage();
+    updateOrderDisplay();
+    updateClearSavedOrderButton();
+    
+    // Show confirmation toast
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    
+    toast.innerHTML = `
+      <div class="custom-toast-content">
+        <forge-icon name="delete" external></forge-icon>
+        <span class="custom-toast-message">Saved order cleared</span>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+}
+
+// Update clear saved order button visibility
+function updateClearSavedOrderButton() {
+  const clearButton = document.getElementById('clear-saved-order');
+  if (clearButton) {
+    const hasSavedOrder = localStorage.getItem(ORDER_STORAGE_KEY) !== null;
+    clearButton.style.display = hasSavedOrder ? 'flex' : 'none';
+  }
+}
 
 // This function is now replaced by addSelectedQuantityToOrder()
 // Keeping for backward compatibility but it's no longer used
@@ -1316,6 +1491,9 @@ function updateOrderDisplay() {
 function removeFromOrder(productName) {
   currentOrder = currentOrder.filter(item => item.name !== productName);
   updateOrderDisplay();
+  
+  // Save order to localStorage
+  saveOrderToStorage();
 }
 
 // New functions for order quantity management
@@ -1341,6 +1519,9 @@ function increaseOrderQuantity(productName) {
   
   item.quantity += 1;
   updateOrderDisplay();
+  
+  // Save order to localStorage
+  saveOrderToStorage();
 }
 
 function decreaseOrderQuantity(productName) {
@@ -1349,6 +1530,9 @@ function decreaseOrderQuantity(productName) {
   
   item.quantity -= 1;
   updateOrderDisplay();
+  
+  // Save order to localStorage
+  saveOrderToStorage();
 }
 
 function updateOrderQuantity(productName, newQuantity) {
@@ -1383,12 +1567,18 @@ function updateOrderQuantity(productName, newQuantity) {
   
   item.quantity = quantity;
   updateOrderDisplay();
+  
+  // Save order to localStorage
+  saveOrderToStorage();
 }
 
 function clearOrder() {
   if (confirm('Are you sure you want to clear your entire order?')) {
     currentOrder = [];
     updateOrderDisplay();
+    
+    // Clear order from localStorage
+    clearOrderFromStorage();
   }
 }
 
@@ -1537,6 +1727,9 @@ function confirmAndSubmitOrder() {
   currentOrder = [];
   updateOrderDisplay();
   updateMobileOrderDialog();
+  
+  // Clear order from localStorage
+  clearOrderFromStorage();
   
   // Close mobile dialog if open
   const mobileDialog = document.getElementById('mobile-order-dialog');
@@ -1857,8 +2050,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // Render all products initially
   renderProducts();
 
-  // Initialize order display with empty state
+  // Check for saved order and load it if available
+  checkForSavedOrder();
+  
+  // Initialize order display (will show saved order if available)
   updateOrderDisplay();
+  
+  // Initialize clear saved order button visibility
+  updateClearSavedOrderButton();
   
   // Ensure "All" category is selected by default
   setTimeout(() => {
