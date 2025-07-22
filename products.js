@@ -1775,6 +1775,77 @@ function handleDrawerVisibility() {
   }
 }
 
+// Full screen functionality
+function requestFullScreen() {
+  const elem = document.documentElement;
+  
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { // Safari
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { // IE11
+    elem.msRequestFullscreen();
+  } else if (elem.mozRequestFullScreen) { // Firefox
+    elem.mozRequestFullScreen();
+  }
+}
+
+function exitFullScreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) { // Safari
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { // IE11
+    document.msExitFullscreen();
+  } else if (document.mozCancelFullScreen) { // Firefox
+    document.mozCancelFullScreen();
+  }
+}
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement && 
+      !document.webkitFullscreenElement && 
+      !document.msFullscreenElement && 
+      !document.mozFullScreenElement) {
+    requestFullScreen();
+  } else {
+    exitFullScreen();
+  }
+}
+
+// Check if full screen is supported
+function isFullScreenSupported() {
+  return document.fullscreenEnabled || 
+         document.webkitFullscreenEnabled || 
+         document.msFullscreenEnabled || 
+         document.mozFullScreenEnabled;
+}
+
+// Update full screen button state
+function updateFullScreenButtonState() {
+  const fullscreenToggle = document.getElementById('fullscreen-toggle');
+  if (!fullscreenToggle) return;
+  
+  const isFullScreen = !!(document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.msFullscreenElement || 
+                         document.mozFullScreenElement);
+  
+  const icon = fullscreenToggle.querySelector('forge-icon');
+  if (icon) {
+    icon.name = isFullScreen ? 'fullscreen_exit' : 'fullscreen';
+  }
+  
+  // Disable button if full screen is not supported
+  if (!isFullScreenSupported()) {
+    fullscreenToggle.disabled = true;
+    fullscreenToggle.title = 'Full screen not supported';
+  } else {
+    fullscreenToggle.disabled = false;
+    fullscreenToggle.title = isFullScreen ? 'Exit full screen' : 'Enter full screen';
+  }
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
   // Set initial full screen button state

@@ -22,6 +22,9 @@
     <div slot="header">
       <forge-app-bar title-text="Caddo Parish, LA" class="app-bar">
         <forge-icon slot="logo" name="tyler_talking_t_logo" external></forge-icon>
+        <forge-icon-button slot="end" id="fullscreen-toggle" aria-label="Toggle full screen" onclick="toggleFullScreen()" title="Enter full screen">
+          <forge-icon name="fullscreen" external></forge-icon>
+        </forge-icon-button>
         <a href="https://caddo-commissary2.vercel.app" slot="end" style="text-decoration: none; color: inherit;">
           <div class="inmate-info">
             <forge-icon name="person" external></forge-icon>
@@ -69,7 +72,7 @@
               <p class="forge-typography--label2">Remaining balance: <span class="balance-amount">$617.94</span></p>
               <forge-meter id="meter" max="100" density="small" theme="success"></forge-meter>
             </div>
-<!--             <a href="order-history.html">
+            <!-- <a href="order-history.html">
               <forge-button variant="outlined" theme="success">
                 Order history
               </forge-button>
