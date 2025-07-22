@@ -168,6 +168,9 @@
   <forge-dialog id="mobile-order-dialog" label="Order Details" description="Review and submit your commissary order" fullscreen>
     <forge-scaffold>
       <forge-toolbar slot="header" auto-height style="--forge-toolbar-padding-block: 1rem; --forge-toolbar-padding-inline: 2rem;">
+        <forge-icon-button slot="start" aria-label="Go back" onclick="closeMobileOrderDialog()">
+          <forge-icon name="arrow_back" external></forge-icon>
+        </forge-icon-button>
         <h2 slot="start" class="forge-typography--heading3">Order Details</h2>
         <forge-icon-button slot="end" aria-label="Close dialog" onclick="closeMobileOrderDialog()">
           <forge-icon name="close" external></forge-icon>
