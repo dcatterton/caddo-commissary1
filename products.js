@@ -1247,15 +1247,54 @@ function updateClearSavedOrderButton() {
   }
 }
 
-// Show full screen prompt to user
-function showFullScreenPrompt() {
+// Show full screen prompt dialog
+function showFullScreenPromptDialog() {
+  const dialog = document.getElementById('fullscreen-prompt-dialog');
+  if (dialog) {
+    dialog.open = true;
+  }
+}
+
+// Enter full screen mode
+function enterFullScreen() {
+  try {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    }
+  } catch (error) {
+    console.log('Enter full screen failed:', error);
+  }
+  
+  // Close the dialog
+  const dialog = document.getElementById('fullscreen-prompt-dialog');
+  if (dialog) {
+    dialog.open = false;
+  }
+}
+
+// Skip full screen mode
+function skipFullScreen() {
+  // Close the dialog
+  const dialog = document.getElementById('fullscreen-prompt-dialog');
+  if (dialog) {
+    dialog.open = false;
+  }
+  
+  // Show a toast message that they can still enter full screen later
   const toast = document.createElement('div');
   toast.className = 'custom-toast';
   
   toast.innerHTML = `
     <div class="custom-toast-content">
-      <forge-icon name="fullscreen" external></forge-icon>
-      <span class="custom-toast-message">Click the full screen button or press F11 to enter full screen mode</span>
+      <forge-icon name="info" external></forge-icon>
+      <span class="custom-toast-message">You can enter full screen mode anytime using the button in the app bar or pressing F11</span>
     </div>
   `;
   
@@ -1272,7 +1311,7 @@ function showFullScreenPrompt() {
         document.body.removeChild(toast);
       }
     }, 300);
-  }, 6000); // Show for 6 seconds
+  }, 4000);
 }
 
 // This function is now replaced by addSelectedQuantityToOrder()
@@ -2072,39 +2111,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set initial full screen button state
   updateFullScreenButtonState();
   
-  // Automatically request full screen on page load
-  // Note: Most browsers require user interaction before allowing full screen
-  // We'll try to request it, but it may not work without user interaction
+  // Show full screen prompt dialog on page load
   setTimeout(() => {
     if (isFullScreenSupported()) {
-      // Try to request full screen automatically
-      try {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen().catch(error => {
-            console.log('Auto full screen failed (requires user interaction):', error);
-            showFullScreenPrompt();
-          });
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen().catch(error => {
-            console.log('Auto full screen failed (requires user interaction):', error);
-            showFullScreenPrompt();
-          });
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen().catch(error => {
-            console.log('Auto full screen failed (requires user interaction):', error);
-            showFullScreenPrompt();
-          });
-        } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen().catch(error => {
-            console.log('Auto full screen failed (requires user interaction):', error);
-            showFullScreenPrompt();
-          });
-        }
-      } catch (error) {
-        console.log('Auto full screen failed:', error);
-        showFullScreenPrompt();
-      }
+      showFullScreenPromptDialog();
     }
   }, 1000);
   
@@ -2152,30 +2162,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Listen for window resize
   window.addEventListener('resize', handleDrawerVisibility);
   
-  // Add click listener to trigger full screen on first user interaction
-  let hasUserInteracted = false;
-  document.addEventListener('click', function() {
-    if (!hasUserInteracted && isFullScreenSupported()) {
-      hasUserInteracted = true;
-      // Try to enter full screen on first click
-      setTimeout(() => {
-        try {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-          } else if (elem.mozRequestFullScreen) {
-            elem.mozRequestFullScreen();
-          }
-        } catch (error) {
-          console.log('Full screen on click failed:', error);
-        }
-      }, 100);
-    }
-  }, { once: true }); // Only trigger once
+
   
   // Add keyboard shortcuts for full screen
   document.addEventListener('keydown', function(event) {
