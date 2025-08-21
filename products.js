@@ -1,3 +1,148 @@
+// Function to toggle categories visibility
+function toggleCategories() {
+  const categoryChips = document.getElementById('category-chips');
+  const toggleButton = document.getElementById('toggle-categories-btn');
+  
+  if (categoryChips.classList.contains('hidden')) {
+    // Show categories
+    categoryChips.classList.remove('hidden');
+    toggleButton.innerHTML = 'Hide categories<forge-icon slot="end" name="keyboard_arrow_up" external></forge-icon>';
+    
+    // Automatically select 'all' filter when showing categories
+    selectCategory('all');
+  } else {
+    // Hide categories
+    categoryChips.classList.add('hidden');
+    toggleButton.innerHTML = 'Show categories<forge-icon slot="end" name="keyboard_arrow_down" external></forge-icon>';
+  }
+}
+
+// Fuzzy Search Functions
+function calculateLevenshteinDistance(str1, str2) {
+  const matrix = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
+
+function calculateSimilarity(str1, str2) {
+  const distance = calculateLevenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
+  const maxLength = Math.max(str1.length, str2.length);
+  return maxLength === 0 ? 1 : (maxLength - distance) / maxLength;
+}
+
+function fuzzySearch(searchTerm, productName) {
+  if (!searchTerm || !productName) return 0;
+  
+  const searchLower = searchTerm.toLowerCase();
+  const productLower = productName.toLowerCase();
+  
+  // 1. Exact match (highest priority)
+  if (productLower === searchLower) {
+    return 1.0;
+  }
+  
+  // 2. Starts with match (high priority)
+  if (productLower.startsWith(searchLower)) {
+    return 0.9;
+  }
+  
+  // 3. Contains match (medium priority)
+  if (productLower.includes(searchLower)) {
+    return 0.8;
+  }
+  
+  // 4. Word boundary matches (medium-high priority)
+  const words = productLower.split(/\s+/);
+  for (const word of words) {
+    if (word.startsWith(searchLower)) {
+      return 0.85;
+    }
+    if (word.includes(searchLower)) {
+      return 0.75;
+    }
+  }
+  
+  // 5. Fuzzy match using Levenshtein distance
+  const similarity = calculateSimilarity(searchLower, productLower);
+  if (similarity >= 0.6) {
+    return similarity * 0.7; // Scale down fuzzy matches
+  }
+  
+  // 6. Substring with typos (lower priority)
+  if (searchLower.length >= 3) {
+    for (let i = 0; i <= productLower.length - searchLower.length; i++) {
+      const substring = productLower.substring(i, i + searchLower.length);
+      const substringSimilarity = calculateSimilarity(searchLower, substring);
+      if (substringSimilarity >= 0.7) {
+        return substringSimilarity * 0.6;
+      }
+    }
+  }
+  
+  return 0; // No match
+}
+
+function searchProducts(searchTerm) {
+  if (!searchTerm || searchTerm.trim() === '') {
+    return {};
+  }
+  
+  const searchLower = searchTerm.toLowerCase().trim();
+  const results = {};
+  const allProducts = [];
+  
+  // Collect all products with their categories
+  Object.keys(commissaryProducts).forEach(letter => {
+    commissaryProducts[letter].forEach(product => {
+      allProducts.push({
+        ...product,
+        category: letter,
+        score: fuzzySearch(searchLower, product.name)
+      });
+    });
+  });
+  
+  // Filter products with scores > 0 and sort by score
+  const matchingProducts = allProducts
+    .filter(product => product.score > 0)
+    .sort((a, b) => b.score - a.score);
+  
+  // Group results by category
+  matchingProducts.forEach(product => {
+    if (!results[product.category]) {
+      results[product.category] = [];
+    }
+    results[product.category].push({
+      name: product.name,
+      price: product.price
+    });
+  });
+  
+  return results;
+}
+
 // Function to reset quantity dialog state
 function resetQuantityDialogState() {
   // Clear all check icons
@@ -229,7 +374,7 @@ function renderProductsForLetter(letter, products = null) {
     const canAffordItem = remainingBalance >= product.price;
     
     return `
-    <forge-card>
+    <forge-card class="clickable-product-card" data-product-name="${escapedName}" data-product-price="${product.price}" data-can-afford="${canAffordItem}">
       <div class="product-item">
         <div class="item-left">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/No-Image-Placeholder-landscape.svg/1200px-No-Image-Placeholder-landscape.svg.png" alt="${product.name}" />
@@ -240,7 +385,9 @@ function renderProductsForLetter(letter, products = null) {
         </div>
         <div class="item-right">
           ${canAffordItem ? 
-            `<forge-button variant="outlined" onclick="showQuantityDialog('${escapedName}', ${product.price})">Add</forge-button>` :
+            `<forge-icon-button class="add-button" aria-label="Add ${product.name} to order">
+              <forge-icon name="keyboard_arrow_right" external></forge-icon>
+            </forge-icon-button>` :
             `<forge-badge theme="error" title="Need $${(product.price - remainingBalance).toFixed(2)} more">Exceeds balance</forge-badge>`
           }
         </div>
@@ -265,16 +412,8 @@ function renderProducts(selectedLetter = 'all', searchTerm = '') {
       filteredProducts[selectedLetter] = commissaryProducts[selectedLetter] || [];
     }
   } else {
-    // Search through all products
-    const searchLower = searchTerm.toLowerCase();
-    Object.keys(commissaryProducts).forEach(letter => {
-      const matchingProducts = commissaryProducts[letter].filter(product => 
-        product.name.toLowerCase().includes(searchLower)
-      );
-      if (matchingProducts.length > 0) {
-        filteredProducts[letter] = matchingProducts;
-      }
-    });
+    // Use fuzzy search for better matching
+    filteredProducts = searchProducts(searchTerm);
   }
   
   // Render the filtered products
@@ -304,6 +443,24 @@ function renderProducts(selectedLetter = 'all', searchTerm = '') {
   
   productsContainer.innerHTML = html;
   
+  // Add click event listeners to all product cards
+  const productCards = productsContainer.querySelectorAll('.clickable-product-card');
+  productCards.forEach(card => {
+    card.addEventListener('click', function(event) {
+      // Don't trigger if clicking on the add button (to avoid double triggers)
+      if (event.target.closest('.add-button')) {
+        return;
+      }
+      
+      const productName = this.getAttribute('data-product-name');
+      const productPrice = parseFloat(this.getAttribute('data-product-price'));
+      const canAfford = this.getAttribute('data-can-afford') === 'true';
+      
+      if (canAfford) {
+        showQuantityDialog(productName, productPrice);
+      }
+    });
+  });
 
 }
 
@@ -364,6 +521,11 @@ function createMobileQuantityDialog(productName, price) {
       </div>
       
       <div class="mobile-quantity-body">
+      <!-- Balance limitation message -->
+        <forge-inline-message id="mobile-balance-limitation-message" theme="error" style="display: inline-flex; margin-top: 1rem;">
+          <forge-icon slot="icon" name="alert" external></forge-icon>
+          <span id="mobile-balance-limitation-text">Your remaining balance limits you to X of these items</span>
+        </forge-inline-message>
       <p class="forge-typography--subheading3" style="margin: 0px;">Select quantity</p>
         <div class="quantity-options-grid" id="mobile-quantity-options-container">
           <!-- Quantity options will be dynamically generated here -->
@@ -373,7 +535,7 @@ function createMobileQuantityDialog(productName, price) {
           <h3 class="forge-typography--subheading3">Other quantity</h3>
           <div class="custom-quantity-row">
             <forge-text-field>
-              <input type="number" id="mobile-custom-quantity-input" min="1" placeholder="Enter custom quantity">
+              <input type="number" id="mobile-custom-quantity-input" min="1" max="9999" placeholder="Enter custom quantity" inputmode="numeric" autocomplete="off">
             </forge-text-field>
             <div class="custom-quantity-total">
               <span class="total-label">Total:</span>
@@ -381,6 +543,8 @@ function createMobileQuantityDialog(productName, price) {
             </div>
           </div>
         </div>
+        
+        
       </div>
       
       <div class="mobile-quantity-footer">
@@ -394,7 +558,7 @@ function createMobileQuantityDialog(productName, price) {
           <forge-button variant="outlined" onclick="closeMobileQuantityDialog()">
             Cancel
           </forge-button>
-          <forge-button variant="raised" id="mobile-add-to-order-btn" theme="success">
+          <forge-button variant="filled" id="mobile-add-to-order-btn" theme="success">
             Add to order
           </forge-button>
         </div>
@@ -449,6 +613,24 @@ function populateMobileQuantityDialogContent(productName, price) {
     meterElement.value = clampedValue;
   }
   
+  // Calculate maximum affordable quantity
+  const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const remainingBalance = 617.94;
+  const maxAffordableQuantity = Math.floor((remainingBalance - currentSubtotal) / price);
+  
+  // Show balance limitation message if there are restrictions
+  const balanceLimitationMessage = document.getElementById('mobile-balance-limitation-message');
+  const balanceLimitationText = document.getElementById('mobile-balance-limitation-text');
+  
+  if (balanceLimitationMessage && balanceLimitationText) {
+    if (maxAffordableQuantity < 20) {
+      balanceLimitationText.textContent = `Your remaining balance limits you to ${maxAffordableQuantity} of these items`;
+      balanceLimitationMessage.style.display = 'block';
+    } else {
+      balanceLimitationMessage.style.display = 'none';
+    }
+  }
+  
   // Generate quantity options (1-20)
   if (quantityOptionsContainer) {
     let optionsHtml = '';
@@ -459,24 +641,25 @@ function populateMobileQuantityDialogContent(productName, price) {
       for (let col = 0; col < 5; col++) {
         const i = row * 5 + col + 1;
         const totalPrice = price * i;
-        const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const totalAfterAdd = currentSubtotal + totalPrice;
-        const remainingBalance = 617.94;
         const isDisabled = totalAfterAdd > remainingBalance;
         
-        optionsHtml += `
-          <div class="quantity-option ${isDisabled ? 'disabled' : ''}" data-quantity="${i}" data-disabled="${isDisabled}">
-            <div class="quantity-option-content">
-              <div class="quantity-info">
-                <span class="quantity-number">${i}</span>
-                <span class="quantity-price">$${totalPrice.toFixed(2)}</span>
-              </div>
-              <div class="quantity-check-icon" id="mobile-check-${i}">
-                <forge-icon name="check_circle" external></forge-icon>
+        // Only add the option if it's not disabled (affordable)
+        if (!isDisabled) {
+          optionsHtml += `
+            <div class="quantity-option" data-quantity="${i}" data-disabled="false">
+              <div class="quantity-option-content">
+                <div class="quantity-info">
+                  <span class="quantity-number">${i}</span>
+                  <span class="quantity-price">$${totalPrice.toFixed(2)}</span>
+                </div>
+                <div class="quantity-check-icon" id="mobile-check-${i}">
+                  <forge-icon name="check_circle" external></forge-icon>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       }
       optionsHtml += '</div>';
     }
@@ -491,11 +674,7 @@ function populateMobileQuantityDialogContent(productName, price) {
         event.stopPropagation();
         
         const quantity = parseInt(this.getAttribute('data-quantity'));
-        const isDisabled = this.getAttribute('data-disabled') === 'true';
-        
-        if (!isDisabled) {
-          selectMobileQuantityOption(quantity, isDisabled, event);
-        }
+        selectMobileQuantityOption(quantity, false, event);
       });
     });
     
@@ -530,6 +709,29 @@ function populateMobileQuantityDialogContent(productName, price) {
       // Update the total cost display
       updateMobileCustomQuantityTotal(customQuantity);
     });
+    
+    // Add focus event listener to clear radio selection when field gains focus
+    customQuantityInput.addEventListener('focus', function() {
+      // Hide all check icons
+      const allCheckIcons = document.querySelectorAll('.quantity-check-icon');
+      allCheckIcons.forEach(icon => {
+        icon.style.display = 'none';
+      });
+      
+      // Remove selected styling from all options
+      const allOptions = document.querySelectorAll('.quantity-option');
+      allOptions.forEach(option => {
+        option.classList.remove('selected');
+      });
+      
+      // Reset remaining balance to original state
+      updateMobileDialogRemainingBalance(0);
+      
+      // Reset custom quantity total
+      updateMobileCustomQuantityTotal(0);
+    });
+    
+
   }
   
   // Add event listener to the mobile Add to Order button
@@ -566,9 +768,9 @@ function selectMobileQuantityOption(quantity, isDisabled, event) {
     selectedCheckIcon.style.display = 'flex';
   }
   
-  // Update the custom quantity input
+  // Update the custom quantity input only if it's empty or user hasn't been typing
   const customQuantityInput = document.getElementById('mobile-custom-quantity-input');
-  if (customQuantityInput) {
+  if (customQuantityInput && (customQuantityInput.value === '' || customQuantityInput.value === '0')) {
     customQuantityInput.value = quantity;
   }
   
@@ -713,6 +915,24 @@ function populateQuantityDialog(productName, price) {
     meterElement.value = clampedValue;
   }
   
+  // Calculate maximum affordable quantity
+  const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const remainingBalance = 617.94;
+  const maxAffordableQuantity = Math.floor((remainingBalance - currentSubtotal) / price);
+  
+  // Show balance limitation message if there are restrictions
+  const balanceLimitationMessage = document.getElementById('balance-limitation-message');
+  const balanceLimitationText = document.getElementById('balance-limitation-text');
+  
+  if (balanceLimitationMessage && balanceLimitationText) {
+    if (maxAffordableQuantity < 20) {
+      balanceLimitationText.textContent = `Your remaining balance limits you to ${maxAffordableQuantity} of these items`;
+      balanceLimitationMessage.style.display = 'block';
+    } else {
+      balanceLimitationMessage.style.display = 'none';
+    }
+  }
+  
   // Generate quantity options (1-20)
   if (quantityOptionsContainer) {
     let optionsHtml = '';
@@ -723,24 +943,25 @@ function populateQuantityDialog(productName, price) {
       for (let col = 0; col < 5; col++) {
         const i = row * 5 + col + 1;
         const totalPrice = price * i;
-        const currentSubtotal = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const totalAfterAdd = currentSubtotal + totalPrice;
-        const remainingBalance = 617.94;
         const isDisabled = totalAfterAdd > remainingBalance;
         
-        optionsHtml += `
-          <div class="quantity-option ${isDisabled ? 'disabled' : ''}" data-quantity="${i}" data-disabled="${isDisabled}">
-            <div class="quantity-option-content">
-              <div class="quantity-info">
-                <span class="quantity-number">${i}</span>
-                <span class="quantity-price">$${totalPrice.toFixed(2)}</span>
-              </div>
-              <div class="quantity-check-icon" id="check-${i}">
-                <forge-icon name="check_circle" external></forge-icon>
+        // Only add the option if it's not disabled (affordable)
+        if (!isDisabled) {
+          optionsHtml += `
+            <div class="quantity-option" data-quantity="${i}" data-disabled="false">
+              <div class="quantity-option-content">
+                <div class="quantity-info">
+                  <span class="quantity-number">${i}</span>
+                  <span class="quantity-price">$${totalPrice.toFixed(2)}</span>
+                </div>
+                <div class="quantity-check-icon" id="check-${i}">
+                  <forge-icon name="check_circle" external></forge-icon>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       }
       optionsHtml += '</div>';
     }
@@ -755,11 +976,7 @@ function populateQuantityDialog(productName, price) {
         event.stopPropagation();
         
         const quantity = parseInt(this.getAttribute('data-quantity'));
-        const isDisabled = this.getAttribute('data-disabled') === 'true';
-        
-        if (!isDisabled) {
-          selectQuantityOption(quantity, isDisabled, event);
-        }
+        selectQuantityOption(quantity, false, event);
       });
     });
     
@@ -794,6 +1011,8 @@ function populateQuantityDialog(productName, price) {
       // Update the total cost display
       updateCustomQuantityTotal(customQuantity);
     });
+    
+
   }
   
   // Add event listener to the Add to Order button
@@ -835,9 +1054,9 @@ function selectQuantityOption(quantity, isDisabled, event) {
     selectedCheckIcon.style.display = 'flex';
   }
   
-  // Update the custom quantity input
+  // Update the custom quantity input only if it's empty or user hasn't been typing
   const customQuantityInput = document.getElementById('custom-quantity-input');
-  if (customQuantityInput) {
+  if (customQuantityInput && (customQuantityInput.value === '' || customQuantityInput.value === '0')) {
     customQuantityInput.value = quantity;
   }
   
@@ -862,7 +1081,7 @@ function selectQuantityOption(quantity, isDisabled, event) {
 function selectQuantity(quantity) {
   // This function is now used for the custom quantity input
   const customQuantityInput = document.getElementById('custom-quantity-input');
-  if (customQuantityInput) {
+  if (customQuantityInput && (customQuantityInput.value === '' || customQuantityInput.value === '0')) {
     customQuantityInput.value = quantity;
   }
 }
@@ -1203,6 +1422,44 @@ function formatOrderAge() {
 }
 
 // Clear saved order function
+function clearSearch() {
+  const searchInput = document.querySelector('.order-search-field input[type="search"]');
+  const clearSearchBtn = document.querySelector('.clear-search-btn');
+  
+  if (searchInput) {
+    // Clear the input field
+    searchInput.value = '';
+    
+    // Reset the search state
+    currentSearchTerm = '';
+    
+    // Hide the clear button
+    if (clearSearchBtn) {
+      clearSearchBtn.style.display = 'none';
+    }
+    
+    // Directly reset to "All" category without going through selectCategory
+    const chips = document.querySelectorAll('#category-chips forge-chip');
+    chips.forEach(c => {
+      if (c.selected) {
+        c.removeAttribute('selected');
+      }
+    });
+    
+    // Select the "All" chip
+    const allChip = document.querySelector('#category-chips forge-chip[value="all"]');
+    if (allChip) {
+      allChip.setAttribute('selected', '');
+    }
+    
+    // Update current selection
+    currentSelectedLetter = 'all';
+    
+    // Force a complete reset by re-rendering all products
+    renderProducts('all', '');
+  }
+}
+
 function clearSavedOrder() {
   if (confirm('Are you sure you want to clear your saved order? This action cannot be undone.')) {
     currentOrder = [];
@@ -1350,22 +1607,43 @@ function updateMobileOrderDialog() {
   if (!dialogContent || !dialogTotal) return;
   
   if (currentOrder.length === 0) {
-    dialogContent.innerHTML = '<p class="forge-typography--body2 order-empty-message">No items in order</p>';
+    dialogContent.innerHTML = `
+      <div style="text-align: center; padding: 2rem 1rem;">
+        <forge-icon name="shopping_cart" external style="font-size: 48px; color: var(--forge-theme-text-medium); margin-bottom: 1rem;"></forge-icon>
+        <p class="forge-typography--heading4" style="margin: 0 0 0.5rem 0; color: var(--forge-theme-text-medium);">Your order is empty</p>
+        <p class="forge-typography--body2" style="margin: 0; color: var(--forge-theme-text-medium);">Browse products and add items to get started</p>
+      </div>
+    `;
     dialogTotal.textContent = '$0.00';
     if (mobileSubtotal) mobileSubtotal.textContent = '$0.00';
     if (mobileTax) mobileTax.textContent = '$0.00';
+    
+    // Disable submit button when no items
+    const submitButton = document.querySelector('#mobile-order-dialog forge-button[variant="raised"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
     return;
   }
   
   let html = '';
   let subtotal = 0;
   
-  currentOrder.forEach(item => {
+  // Reverse the order to show most recent items at the top
+  const reversedOrder = [...currentOrder].reverse();
+  
+  reversedOrder.forEach(item => {
     const itemTotal = item.price * item.quantity;
     subtotal += itemTotal;
     
-    // Escape the item name for use in HTML attributes
-    const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    // Escape the item name for use in HTML attributes - improved escaping
+    const escapedName = item.name
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
     
     html += `
       <div class="order-item">
@@ -1408,6 +1686,12 @@ function updateMobileOrderDialog() {
   // Update the mobile cost breakdown
   if (mobileSubtotal) mobileSubtotal.textContent = `$${subtotal.toFixed(2)}`;
   if (mobileTax) mobileTax.textContent = `$${salesTax.toFixed(2)}`;
+  
+  // Enable submit button when there are items
+  const submitButton = document.querySelector('#mobile-order-dialog forge-button[variant="raised"]');
+  if (submitButton) {
+    submitButton.disabled = false;
+  }
 }
 
 function submitOrder() {
@@ -1439,7 +1723,7 @@ function updateOrderDisplay() {
     const emptyMessage = '<p class="forge-typography--body2 order-empty-message">No items in order</p>';
     if (orderContainer) orderContainer.innerHTML = emptyMessage;
     if (totalElement) totalElement.textContent = '$0.00';
-    if (mobileOrderTotal) mobileOrderTotal.textContent = '$0.00';
+    if (mobileOrderTotal) mobileOrderTotal.textContent = 'Start shopping';
     if (mobileRemainingBalance) mobileRemainingBalance.textContent = '$617.94';
     if (headerRemainingBalance) headerRemainingBalance.textContent = '$617.94';
     if (headerMeter) headerMeter.value = 0;
@@ -1448,10 +1732,10 @@ function updateOrderDisplay() {
     if (drawerTax) drawerTax.textContent = '$0.00';
     if (itemCountElement) itemCountElement.textContent = '0 items';
     
-    // Hide mobile order dialog when no items
+    // Keep mobile order sheet visible even when no items (for consistent mobile UX)
     const mobileOrderDialog = document.getElementById('mobile-order-sheet');
-    if (mobileOrderDialog) {
-      mobileOrderDialog.open = false;
+    if (mobileOrderDialog && window.innerWidth <= 800) {
+      mobileOrderDialog.open = true;
     }
     return;
   }
@@ -1459,7 +1743,7 @@ function updateOrderDisplay() {
   // Show clear order button when there are items
   if (clearOrderBtn) clearOrderBtn.style.display = 'flex';
   
-  // Show mobile order dialog when there are items
+  // Show mobile order dialog when there are items (or keep visible on mobile)
   const mobileOrderDialog = document.getElementById('mobile-order-sheet');
   if (mobileOrderDialog) {
     mobileOrderDialog.open = true;
@@ -1469,13 +1753,22 @@ function updateOrderDisplay() {
   let total = 0;
   let totalItems = 0;
   
-  currentOrder.forEach(item => {
+  // Reverse the order to show most recent items at the top
+  const reversedOrder = [...currentOrder].reverse();
+  
+  reversedOrder.forEach(item => {
     const itemTotal = item.price * item.quantity;
     total += itemTotal;
     totalItems += item.quantity;
     
-    // Escape the item name for use in HTML attributes
-    const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    // Escape the item name for use in HTML attributes - improved escaping
+    const escapedName = item.name
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
     
     html += `
       <div class="order-item">
@@ -1518,7 +1811,7 @@ function updateOrderDisplay() {
   
   if (orderContainer) orderContainer.innerHTML = html;
   if (totalElement) totalElement.textContent = totalText;
-  if (mobileOrderTotal) mobileOrderTotal.textContent = `$${orderTotal.toFixed(2)}`;
+  if (mobileOrderTotal) mobileOrderTotal.textContent = `$${orderTotal.toFixed(2)} total`;
   if (mobileRemainingBalance) mobileRemainingBalance.textContent = `$${remainingBalance.toFixed(2)}`;
   if (headerRemainingBalance) headerRemainingBalance.textContent = `$${remainingBalance.toFixed(2)}`;
   
@@ -2012,15 +2305,11 @@ function handleDrawerVisibility() {
     if (drawer) {
       drawer.style.display = 'none';
     }
-    // Show mobile order dialog only when there are items
+    // Show mobile order dialog (always visible on mobile for consistent UX)
     if (mobileOrderDialog) {
       mobileOrderDialog.style.display = 'block';
-      // Always check current order state when switching to mobile
-      if (currentOrder && currentOrder.length > 0) {
-        mobileOrderDialog.open = true;
-      } else {
-        mobileOrderDialog.open = false;
-      }
+      // Keep mobile order sheet visible regardless of order state
+      mobileOrderDialog.open = true;
     }
   } else {
     // Show drawer on large screens
@@ -2140,24 +2429,91 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Add search functionality
   const searchInput = document.querySelector('.order-search-field input[type="search"]');
-  if (searchInput) {
+  const clearSearchBtn = document.querySelector('.clear-search-btn');
+  
+    if (searchInput) {
     searchInput.addEventListener('input', function() {
       currentSearchTerm = this.value;
       
-      // Auto-select "All" category when searching
-      if (currentSearchTerm.trim() !== '') {
-        selectCategory('all');
-      } else {
-        // When search is cleared, ensure "All" is selected
-        selectCategory('all');
+      // Show/hide clear button based on search content
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = currentSearchTerm.trim() !== '' ? 'inline-flex' : 'none';
       }
       
+          // Auto-select "All" category when searching
+    if (currentSearchTerm.trim() !== '') {
+      selectCategory('all');
       renderProducts(currentSelectedLetter, currentSearchTerm);
+    } else {
+      // When search is cleared, directly reset to show all categories
+      currentSearchTerm = '';
+      
+      // Directly reset to "All" category
+      const chips = document.querySelectorAll('#category-chips forge-chip');
+      chips.forEach(c => {
+        if (c.selected) {
+          c.removeAttribute('selected');
+        }
+      });
+      
+      // Select the "All" chip
+      const allChip = document.querySelector('#category-chips forge-chip[value="all"]');
+      if (allChip) {
+        allChip.setAttribute('selected', '');
+      }
+      
+      // Update current selection
+      currentSelectedLetter = 'all';
+      
+      // Force re-render to ensure all products are shown
+      renderProducts('all', '');
+    }
+    });
+    
+    // Handle the search event (fires when user clears search field)
+    searchInput.addEventListener('search', function() {
+      if (this.value === '') {
+        // Search field was cleared, reset to show all categories
+        currentSearchTerm = '';
+        
+        // Directly reset to "All" category
+        const chips = document.querySelectorAll('#category-chips forge-chip');
+        chips.forEach(c => {
+          if (c.selected) {
+            c.removeAttribute('selected');
+          }
+        });
+        
+        // Select the "All" chip
+        const allChip = document.querySelector('#category-chips forge-chip[value="all"]');
+        if (allChip) {
+          allChip.setAttribute('selected', '');
+        }
+        
+        // Update current selection
+        currentSelectedLetter = 'all';
+        
+        // Hide the clear button
+        if (clearSearchBtn) {
+          clearSearchBtn.style.display = 'none';
+        }
+        
+        // Force re-render to show all products
+        renderProducts('all', '');
+      }
     });
   }
   
   // Initial check
   handleDrawerVisibility();
+  
+  // Ensure mobile order sheet is visible on mobile devices
+  if (window.innerWidth <= 800) {
+    const mobileOrderSheet = document.getElementById('mobile-order-sheet');
+    if (mobileOrderSheet) {
+      mobileOrderSheet.open = true;
+    }
+  }
   
   // Listen for window resize
   window.addEventListener('resize', handleDrawerVisibility);
@@ -2217,6 +2573,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Prevent infinite recursion by checking if already selected
     if (currentSelectedLetter === (categoryValue === 'all' ? 'all' : categoryValue.toUpperCase())) {
       return;
+    }
+    
+    // Clear search input when a category is selected
+    const searchInput = document.querySelector('.order-search-field input[type="search"]');
+    const clearSearchBtn = document.querySelector('.clear-search-btn');
+    if (searchInput && searchInput.value.trim() !== '') {
+      searchInput.value = '';
+      currentSearchTerm = '';
+      
+      // Hide the clear button when category is selected
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = 'none';
+      }
     }
     
     // Deselect all chips using a more direct approach
